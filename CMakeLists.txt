@@ -8,7 +8,6 @@ endif(CMAKE_BUILD_TYPE STREQUAL Debug)
 
 # Directory includes
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # Set package information
 set(PACKAGE_NAME "nmtools")
@@ -21,12 +20,21 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 project(${PACKAGE_NAME} VERSION ${PACKAGE_VERSION})
 
+make_directory(${PROJECT_BINARY_DIR}/config)
+
+set(BUILDER_NAME ${CURRENT_USER})
+
+configure_file(
+  "${PROJECT_SOURCE_DIR}/EnvironmentInfo.h.in"
+  "${PROJECT_BINARY_DIR}/config/EnvironmentInfo.h"
+)
+
 set(CMAKE_CXX_STANDARD 11)
 
 #set(nmtools_DIR "${CMAKE_CURRENT_SOURCE_DIR}/inm")
 
 include(nmtools-deps)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
+include_directories("${PROJECT_BINARY_DIR}/config")
+include_directories(lib)
 add_subdirectory(src)

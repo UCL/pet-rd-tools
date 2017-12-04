@@ -1,0 +1,2 @@
+const char * const VERSION_NO = "@PACKAGE_VERSION@";
+const char * const BUILDER_NAME = "@BUILDER_NAME@";
