@@ -27,6 +27,7 @@
 #include "Validate.hpp"
 #include "EnvironmentInfo.h"
 
+
 int main(int argc, char **argv)
 {
 
@@ -38,6 +39,7 @@ int main(int argc, char **argv)
   //Set-up command line options
   namespace po = boost::program_options;
   namespace fs = boost::filesystem;
+  namespace nm = nmtools;
 
   po::options_description desc("Options");
   desc.add_options()
@@ -111,33 +113,33 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  LOG(INFO) << "Extension:\t" << fs::extension( srcPath );
+  DLOG(INFO) << "Extension:\t" << fs::extension( srcPath );
 
   //Assume failure at the of execution unless proven otherwise.
-  int fileStatus = -1;
+  nm::FileStatusCode fileStatus = nm::FileStatusCode::EBAD;
 
   LOG(INFO) << "Trying to read as DICOM...";
   fileStatus = nmtools::ReadAsSiemensDICOM( srcPath );
 
-  if ( fileStatus != 1) {
+  if ( fileStatus != nm::FileStatusCode::EGOOD) {
     LOG(INFO)  << "Trying as PTD...";
     fileStatus = nmtools::ReadAsSiemensPTD( srcPath );
   }
 
-  if (  fileStatus == 1 ){
+  if (  fileStatus == nm::FileStatusCode::EGOOD ){
     std::cout << std::endl;
     LOG(INFO) << "File is valid";
   }
 
   //If we can't open this as either a listmode DICOM or PTD, then file is
   //not valid list.
-  if ( fileStatus == -1 ) {
+  if ( fileStatus == nm::FileStatusCode::EBAD ) {
     std::cout << std::endl;
     LOG(ERROR) << "File is INVALID";
   } 
 
   //Error if there is a problem opening the file.
-  if ( fileStatus == 0 ) {
+  if ( fileStatus == nm::FileStatusCode::EIOERROR ) {
     std::cout << std::endl;
     LOG(ERROR) << "Cannot open file:" << srcPath;
   }
@@ -149,7 +151,7 @@ int main(int argc, char **argv)
   LOG(INFO) << "Ended: " << std::asctime(std::localtime(&stopTime));
 
   //If reading was unsuccesful or file not valid, return non-zero value.
-  if (fileStatus != 1)
+  if (fileStatus != nm::FileStatusCode::EGOOD)
     return 1;
 
   return 0;

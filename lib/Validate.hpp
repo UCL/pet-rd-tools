@@ -21,6 +21,8 @@
 #ifndef VALIDATE_HPP
 #define VALIDATE_HPP
 
+#include <memory>
+
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 
@@ -38,10 +40,16 @@ namespace nmtools {
     #define ftello64 _ftelli64
 #endif
 
-int CheckForSiemensBFFile( boost::filesystem::path src, uint64_t numOfWords  ) {
+enum class ContentType { EHEADER, ERAWDATA };
+enum class FileType { EMMRSINO, EMMRLIST, EMMRNORM, EUNKNOWN, EERROR };
+enum class FileStatusCode { EGOOD, EBAD, EIOERROR };
+
+FileStatusCode CheckForSiemensBFFile( boost::filesystem::path src, uint64_t numOfWords  ) {
     //Takes a filepath src, switches the extension to .bf, then checks if:
     //    - The file exists
     //    - The total length = numOfWords
+
+  using namespace nmtools;
 
   FILE *inFile;
 
@@ -50,7 +58,7 @@ int CheckForSiemensBFFile( boost::filesystem::path src, uint64_t numOfWords  ) {
 
   if (! (inFile = fopen( bfPath.string().c_str(), "rb" ))) {
       LOG(INFO) << "Cannot open " << bfPath.native();
-      return -1;
+      return FileStatusCode::EIOERROR;
   }
 
   fseeko64( inFile, 0L, SEEK_END );
@@ -66,65 +74,67 @@ int CheckForSiemensBFFile( boost::filesystem::path src, uint64_t numOfWords  ) {
   if ( endOfFile != numOfWords*4 )
   {
     LOG(INFO) << "Expected no. of LM words does not equal no. read!";
-    return -1;
+    return FileStatusCode::EBAD;
   }
 
-  return 1;
+  return FileStatusCode::EGOOD;
 
 }
 
-int ReadAsSiemensDICOM( boost::filesystem::path src ){
+FileStatusCode ReadAsSiemensDICOM( boost::filesystem::path src ){
   //Try and open as a DICOM file and assume this is from a Siemens machine.
 
-  //Try and open DICOM file
-  gdcm::Reader *dicomReader = new gdcm::Reader;
+  using namespace nmtools;
+
+  std::unique_ptr<gdcm::Reader> dicomReader(new gdcm::Reader);
   dicomReader->SetFileName( src.string().c_str() );
 
   if ( ! dicomReader->Read() ) {
     LOG(INFO) << "Unable to read as DICOM file";
-    return 0;
+    return FileStatusCode::EIOERROR;
   }
 
-    //Get DICOM data
+  //Get DICOM data
   const gdcm::DataSet& ds = dicomReader->GetFile().GetDataSet();
 
-    //Get manufacturer
+  //Get manufacturer
   const gdcm::Tag manufacturer(0x008,0x1090);
   const gdcm::DataElement& pdde= ds.GetDataElement(manufacturer);
   std::stringstream ss;
   ss << (char*) pdde.GetByteValue()->GetPointer();
   LOG(INFO) << "Manufacturer: " << ss.str() ;
 
-    //Get Image Type
+  //Get Image Type
   const gdcm::Tag imageType(0x0008, 0x0008);
   const gdcm::DataElement& pdde2 = ds.GetDataElement(imageType);
   std::stringstream ss2;
   ss2 << (char*)pdde2.GetByteValue()->GetPointer();
   LOG(INFO) << "Image type: " << ss2.str();
 
-    //Get Interfile header
-    const gdcm::Tag headerTag(0x029, 0x1010);
-    const gdcm::DataElement &headerData = ds.GetDataElement(headerTag);
-    std::stringstream headerString;
-    std::stringstream headerStringTmp;
-    headerStringTmp << (char *) headerData.GetByteValue()->GetPointer();
+  //Get Interfile header
+  const gdcm::Tag headerTag(0x029, 0x1010);
+  const gdcm::DataElement &headerData = ds.GetDataElement(headerTag);
+  std::stringstream headerString;
+  std::stringstream headerStringTmp;
+  headerStringTmp << (char *) headerData.GetByteValue()->GetPointer();
 
-    //If this is actually a SMS-MI v 3.2 file then get header from 0029,1110.
-    if (headerStringTmp.str().find("SV10") != std::string::npos) {
-        gdcm::Tag altHeaderTag(0x029, 0x1110);
-        const gdcm::DataElement &altHeaderData = ds.GetDataElement(altHeaderTag);
-        std::stringstream tmpstring;
-        tmpstring << (char *) altHeaderData.GetByteValue()->GetPointer();
-        headerString << tmpstring.str();
-    }
-    else {
-        headerString << headerStringTmp.str();
-    }
-    //Look for expected no of list mode words
+  //If this is actually a SMS-MI v 3.2 file then get header from 0029,1110.
+  if (headerStringTmp.str().find("SV10") != std::string::npos) {
+    gdcm::Tag altHeaderTag(0x029, 0x1110);
+    const gdcm::DataElement &altHeaderData = ds.GetDataElement(altHeaderTag);
+    std::stringstream tmpstring;
+    tmpstring << (char *) altHeaderData.GetByteValue()->GetPointer();
+    headerString << tmpstring.str();
+  }
+  else {
+    headerString << headerStringTmp.str();
+  }
+
+  //Look for expected no. of list mode words
   std::string target = "%total listmode word counts";
   if ( headerString.str().find( target ) == std::string::npos ) {
     LOG(INFO) << "No word count found in Interfile header";
-    return -1;
+    return FileStatusCode::EBAD;
   }
 
   std::string lastline = headerString.str().substr(headerString.str().find(target),headerString.str().length());
@@ -139,7 +149,7 @@ int ReadAsSiemensDICOM( boost::filesystem::path src ){
   }
   else {
     LOG(INFO) << "No word count found in Interfile header";
-    return -1;
+    return FileStatusCode::EBAD;
   }
 
   LOG(INFO) << "Expected number of LM words: " << expectedNoWords;
@@ -162,14 +172,14 @@ int ReadAsSiemensDICOM( boost::filesystem::path src ){
   if (lmLength != expectedNoWords * 4) {
     LOG(INFO) << "Expected no. of LM words does not equal no. read!";
     LOG(INFO) << "Looking for BF file...";
-    return nmtools::CheckForSiemensBFFile( src, expectedNoWords );
+    return CheckForSiemensBFFile( src, expectedNoWords );
   }
 
-  return 1;
+  return FileStatusCode::EGOOD;
 
 }
 
-int ReadAsSiemensPTD( boost::filesystem::path src ){
+FileStatusCode ReadAsSiemensPTD( boost::filesystem::path src ){
     //Checks if a given raw data file is in .ptd format.
     //A .ptd file starts with the raw listmode data and then has a DICOM header
     //placed at the end.
@@ -185,7 +195,7 @@ int ReadAsSiemensPTD( boost::filesystem::path src ){
 
   if (! (inFile = fopen( src.string().c_str(), "rb" ))) {
     LOG(INFO) << "Cannot open " << src.native();
-    return 0;
+    return FileStatusCode::EIOERROR;
   }
 
     //Skip to the end
@@ -221,7 +231,7 @@ int ReadAsSiemensPTD( boost::filesystem::path src ){
 
   if ( dicomHeaderPos == -1 ) {
     LOG(INFO) << "No DICOM header found";
-    return -1;
+    return FileStatusCode::EBAD;
   }
 
     //Try and find Interfile header
@@ -231,7 +241,7 @@ int ReadAsSiemensPTD( boost::filesystem::path src ){
 
   if ( interfileHeader.find( target ) == std::string::npos ) {
     LOG(INFO) << "No Interfile header found";
-    return -1;
+    return FileStatusCode::EBAD;
   }
 
   std::size_t inPoint = interfileHeader.find(target);
@@ -241,7 +251,7 @@ int ReadAsSiemensPTD( boost::filesystem::path src ){
 
   if ( interfileHeader.find( target ) == std::string::npos ) {
     LOG(INFO) << "No end of Interfile header found";
-    return -1;
+    return FileStatusCode::EBAD;
   }
 
     //Find the last line of the Interfile header, then dump everything else.
@@ -254,7 +264,7 @@ int ReadAsSiemensPTD( boost::filesystem::path src ){
   target = "%total listmode word counts";
   if ( interfileHeader.find( target ) == std::string::npos ) {
     LOG(INFO) << "No word count found in Interfile header";
-    return -1;
+    return FileStatusCode::EBAD;
   }
 
   lastline = interfileHeader.substr(interfileHeader.find(target),interfileHeader.length());
@@ -269,7 +279,7 @@ int ReadAsSiemensPTD( boost::filesystem::path src ){
   }
   else {
     LOG(INFO) << "No word count found in Interfile header";
-    return -1;
+    return FileStatusCode::EBAD;
   }
 
   LOG(INFO) << "Expected number of LM words: " << expectedNoWords;
@@ -279,7 +289,7 @@ int ReadAsSiemensPTD( boost::filesystem::path src ){
   if ( (dicomHeaderPos - 128) % 4 != 0 ) {
     LOG(INFO) << (dicomHeaderPos -128) / 4 << " words found";
     LOG(INFO) << "Incorrect number of bytes";
-    return -1;
+    return FileStatusCode::EBAD;
   }
 
   uint64_t actualNoWords = (dicomHeaderPos - 128) / 4;
@@ -287,10 +297,10 @@ int ReadAsSiemensPTD( boost::filesystem::path src ){
 
   if ( actualNoWords != expectedNoWords ) {
     LOG(INFO) << "Expected no. of LM words does not equal no. read!";
-    return -1;
+    return FileStatusCode::EBAD;
   }
 
-  return 1;
+  return FileStatusCode::EGOOD;
 }
 
 }// namespace nmtools
