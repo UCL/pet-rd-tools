@@ -20,8 +20,6 @@
 
  */
 
-// http://ikeptwalking.com/factory-method-pattern/
-
 #ifndef MMR_HPP
 #define MMR_HPP
 
@@ -185,21 +183,24 @@ bool IMMR::ExtractHeader( const boost::filesystem::path dst ){
   const gdcm::DataSet &ds = _dicomReader->GetFile().GetDataSet();
 
   const gdcm::Tag headerTag(0x029, 0x1010);
-  const gdcm::DataElement &headerData = ds.GetDataElement(headerTag);
-  std::stringstream headerString;
-  std::stringstream headerStringTmp;
-  headerStringTmp << (char *) headerData.GetByteValue()->GetPointer();
 
+  std::string headerString;
+  std::string headerStringTmp;
+
+  if (!GetTagInfo(ds,headerTag,headerStringTmp)){
+    LOG(ERROR) << "Unable to header";
+    return false;  
+  }
   //If this is actually a SMS-MI v 3.2 file then get header from 0029,1110.
-  if (headerStringTmp.str().find("SV10") != std::string::npos) {
+  if (headerStringTmp.find("SV10") != std::string::npos) {
     gdcm::Tag altHeaderTag(0x029, 0x1110);
-    const gdcm::DataElement &altHeaderData = ds.GetDataElement(altHeaderTag);
-    std::stringstream tmpstring;
-    tmpstring << (char *) altHeaderData.GetByteValue()->GetPointer();
-    headerString << tmpstring.str();
+    if (!GetTagInfo(ds,altHeaderTag,headerString)){
+      LOG(ERROR) << "Unable to header (SV10)";
+      return false;  
+    }
   }
   else {
-    headerString << headerStringTmp.str();
+    headerString = headerStringTmp;
   }
 
   if (boost::filesystem::exists(dst)) {
@@ -214,7 +215,7 @@ bool IMMR::ExtractHeader( const boost::filesystem::path dst ){
     return false;
   }
   else {
-    outfile << headerString.str();
+    outfile << headerString;
     outfile.close();
     bStatus = true;
   }

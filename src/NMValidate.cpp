@@ -25,6 +25,7 @@
 #include <glog/logging.h>
 
 #include "Validate.hpp"
+#include "MMR.hpp"
 #include "EnvironmentInfo.h"
 
 int main(int argc, char **argv)
@@ -112,6 +113,18 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  //Try and read input file
+  std::unique_ptr<nm::MMRFactory> factory(new nm::MMRFactory);
+  std::unique_ptr<nm::IMMR> reader(factory->Create(srcPath));
+
+  //If now valid reader found, exit.
+  if (reader == nullptr){
+    std::cout << std::endl;
+    LOG(ERROR) << "File appears to be INVALID";
+    return 1;
+  }
+
+  /*
   DLOG(INFO) << "Extension:\t" << fs::extension( srcPath );
 
   //Assume failure at the of execution unless proven otherwise.
@@ -141,7 +154,7 @@ int main(int argc, char **argv)
   if ( fileStatus == nm::FileStatusCode::EIOERROR ) {
     std::cout << std::endl;
     LOG(ERROR) << "Cannot open file:" << srcPath;
-  }
+  }*/
 
   //Print total execution time
   std::time_t stopTime = std::time( 0 ) ;
@@ -150,8 +163,8 @@ int main(int argc, char **argv)
   LOG(INFO) << "Ended: " << std::asctime(std::localtime(&stopTime));
 
   //If reading was unsuccesful or file not valid, return non-zero value.
-  if (fileStatus != nm::FileStatusCode::EGOOD)
-    return 1;
+  //if (fileStatus != nm::FileStatusCode::EGOOD)
+  //  return 1;
 
   return 0;
 }

@@ -120,7 +120,7 @@ int main(int argc, char **argv)
   //If now valid reader found, exit.
   if (reader == nullptr){
     LOG(ERROR) << "Aborting!";
-    return 0;
+    return 1;
   }
 
   //Create output directory.
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
 
   //Make new filename path for raw data
   fs::path newDataFileName = reader->GetStdFileName(outFilePath, nm::ContentType::ERAWDATA);
-  
+
   fs::path dstPath = outDstDir;
   dstPath /= newDataFileName;
   LOG(INFO) << "Writing raw data to: " << dstPath;
