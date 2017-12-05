@@ -59,12 +59,12 @@ int main(int argc, char **argv)
     if (vm.count("help")) {
       std::cout << APP_NAME << std::endl
         << desc << std::endl;
-      return 0;
+      return EXIT_SUCCESS;
     }
 
     if (vm.count("version") ) {
       std::cout << APP_NAME << " : v" << VERSION_NO << std::endl;
-      return 0;
+      return EXIT_SUCCESS;
     }
 
     po::notify(vm); // throws on error
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
   } catch (po::error& e) {
     std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
     std::cerr << desc << std::endl;
-    return 1;
+    return EXIT_FAILURE;
   }
 
   //Configure logging
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
   if (! fs::is_regular_file( srcPath ) )
   {
     LOG(ERROR) << srcPath.native() << " does not appear to be a file!";
-    return 1;
+    return EXIT_FAILURE;
   }
 
   //Try and read input file
@@ -122,13 +122,13 @@ int main(int argc, char **argv)
   //If no valid reader found, exit.
   if (reader == nullptr){
     LOG(ERROR) << "File appears to be INVALID";
-    return 1;
+    return EXIT_FAILURE;
   }
 
   //Check if the file is correct for the identified type.
   if (!reader->IsValid()) {
     LOG(ERROR) << "File appears to be INVALID";
-    return 1;    
+    return EXIT_FAILURE;    
   }
 
   LOG(INFO) << "File appears to be VALID";
@@ -139,5 +139,5 @@ int main(int argc, char **argv)
   LOG(INFO) << "Time taken: " << totalTime << " seconds";
   LOG(INFO) << "Ended: " << std::asctime(std::localtime(&stopTime));
 
-  return 0;
+  return EXIT_SUCCESS;
 }
