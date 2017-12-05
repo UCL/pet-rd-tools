@@ -28,21 +28,9 @@
 
 #include <glog/logging.h>
 
+#include "Common.hpp"
+
 namespace nmtools {
-
-#ifdef __APPLE__
-    #define fseeko64 fseeko
-    #define ftello64 ftello
-#endif
-
-#ifdef WIN32
-    #define fseeko64 _fseeki64
-    #define ftello64 _ftelli64
-#endif
-
-enum class ContentType { EHEADER, ERAWDATA };
-enum class FileType { EMMRSINO, EMMRLIST, EMMRNORM, EUNKNOWN, EERROR };
-enum class FileStatusCode { EGOOD, EBAD, EIOERROR };
 
 FileStatusCode CheckForSiemensBFFile( boost::filesystem::path src, uint64_t numOfWords  ) {
     //Takes a filepath src, switches the extension to .bf, then checks if:

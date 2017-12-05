@@ -27,7 +27,6 @@
 #include "Validate.hpp"
 #include "EnvironmentInfo.h"
 
-
 int main(int argc, char **argv)
 {
 
