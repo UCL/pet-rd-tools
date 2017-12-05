@@ -24,7 +24,6 @@
 #include <boost/program_options.hpp>
 #include <glog/logging.h>
 
-#include "Validate.hpp"
 #include "MMR.hpp"
 #include "EnvironmentInfo.h"
 
@@ -124,37 +123,13 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  /*
-  DLOG(INFO) << "Extension:\t" << fs::extension( srcPath );
-
-  //Assume failure at the of execution unless proven otherwise.
-  nm::FileStatusCode fileStatus = nm::FileStatusCode::EBAD;
-
-  LOG(INFO) << "Trying to read as DICOM...";
-  fileStatus = nmtools::ReadAsSiemensDICOM( srcPath );
-
-  if ( fileStatus != nm::FileStatusCode::EGOOD) {
-    LOG(INFO)  << "Trying as PTD...";
-    fileStatus = nmtools::ReadAsSiemensPTD( srcPath );
+  if (!reader->IsValid()) {
+    std::cout << std::endl;
+    LOG(ERROR) << "File appears to be INVALID";
+    return 1;    
   }
 
-  if (  fileStatus == nm::FileStatusCode::EGOOD ){
-    std::cout << std::endl;
-    LOG(INFO) << "File is valid";
-  }
-
-  //If we can't open this as either a listmode DICOM or PTD, then file is
-  //not valid list.
-  if ( fileStatus == nm::FileStatusCode::EBAD ) {
-    std::cout << std::endl;
-    LOG(ERROR) << "File is INVALID";
-  } 
-
-  //Error if there is a problem opening the file.
-  if ( fileStatus == nm::FileStatusCode::EIOERROR ) {
-    std::cout << std::endl;
-    LOG(ERROR) << "Cannot open file:" << srcPath;
-  }*/
+  LOG(INFO) << "File appears to be VALID";
 
   //Print total execution time
   std::time_t stopTime = std::time( 0 ) ;

@@ -44,6 +44,8 @@ public:
   bool SetInputFile ( boost::filesystem::path src );
   FileType GetFileType( boost::filesystem::path src );
 
+  virtual bool IsValid()=0;
+
   virtual bool ExtractHeader( const boost::filesystem::path dst );
   virtual bool ExtractData( const boost::filesystem::path dst )=0;
   virtual bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile)=0;
@@ -65,6 +67,7 @@ protected:
 class MMR32BitList : public IMMR {
   using IMMR::IMMR;
 public:
+  bool IsValid();
   bool ExtractData( const boost::filesystem::path dst );
   bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile);
   boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype);
@@ -74,6 +77,7 @@ public:
 class MMRSino : public IMMR {
   using IMMR::IMMR;
 public:
+  bool IsValid();
   bool ExtractData( const boost::filesystem::path dst );
   bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile);
   boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype);
@@ -86,6 +90,7 @@ public:
   //({344,127}+{9,344}+{504,64}+{837}+{64}+{64}+{9}+{837}) * 4
   const uint32_t MMRNORMBYTELENGTH = 323404;
 
+  bool IsValid();
   bool ExtractData( const boost::filesystem::path dst );
   bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile);
 
@@ -352,6 +357,75 @@ bool MMR32BitList::ExtractData( const boost::filesystem::path dst ){
   return bStatus;
 }
 
+bool MMR32BitList::IsValid(){
+
+  namespace fs = boost::filesystem;
+
+  bool bStatus = false;
+
+  if (!this->ReadHeader()){
+    LOG(ERROR) << "Unable to read header!";
+    return false;
+  }
+
+  const gdcm::DataSet &ds = _dicomReader->GetFile().GetDataSet();
+
+  std::string target = "%total listmode word counts";
+  if (_headerString.find(target) == std::string::npos) {
+    LOG(INFO) << "No word count tag found in Interfile header";
+    return false;
+  }
+
+  std::string lastline = _headerString.substr(_headerString.find(target), _headerString.length());
+  lastline = lastline.substr(0, lastline.find("\n"));
+
+  boost::regex pattern("[0-9]+");
+  boost::smatch result;
+
+  uint64_t expectedNoWords = 0;
+  if (boost::regex_search(lastline, result, pattern)) {
+    expectedNoWords = boost::lexical_cast<unsigned long>(result);
+  } else {
+    LOG(INFO) << "No word count number found in Interfile header";
+    return false;
+  }
+
+  LOG(INFO) << "Expected number of LM words: " << expectedNoWords;
+
+  const gdcm::Tag lmDataTag(0x7fe1, 0x1010);
+  const gdcm::DataElement &lmData = ds.GetDataElement(lmDataTag);
+  const gdcm::ByteValue *bv = lmData.GetByteValue();
+
+  uint64_t lmLength = bv->GetLength();
+  LOG(INFO) << lmLength << " bytes in LM field";
+
+  uint64_t actualNoWords = lmLength / 4;
+
+  LOG(INFO) << lmLength << " / 4 = " << actualNoWords << " words";
+
+  if (lmLength != expectedNoWords * 4) {
+    LOG(INFO) << "Expected no. of LM words does not equal no. read!";
+    LOG(INFO) << "Looking for BF file...";
+
+    DLOG(INFO) << "SRC: " << this->_srcPath;
+    FileStatusCode bfStatus = CheckForSiemensBFFile(this->_srcPath, expectedNoWords*4);
+
+    if ( bfStatus == FileStatusCode::EGOOD ) {
+      return true;
+    }
+    else {
+      DLOG(ERROR) << "No listmode data found in either header or .bf file!";
+      return false;
+    }
+  } 
+  else {
+    bStatus = true;
+  }
+
+  return bStatus;
+}
+
+
 bool MMRSino::ExtractData( const boost::filesystem::path dst ){
 
   namespace fs = boost::filesystem;
@@ -400,6 +474,46 @@ bool MMRSino::ExtractData( const boost::filesystem::path dst ){
     bv->WriteBuffer(outfile);
     outfile.close();
     bStatus = true;
+  }
+
+  return bStatus;
+}
+
+bool MMRSino::IsValid(){
+
+  namespace fs = boost::filesystem;
+
+  bool bStatus = false;
+
+  if (!this->ReadHeader()){
+    LOG(ERROR) << "Unable to read header!";
+    return false;
+  }
+
+  LOG(WARNING) << "Cannot check sinogram length due to compression.";
+
+  const gdcm::DataSet &ds = _dicomReader->GetFile().GetDataSet();
+
+  const gdcm::Tag lmDataTag(0x7fe1, 0x1010);
+  const gdcm::DataElement &lmData = ds.GetDataElement(lmDataTag);
+  const gdcm::ByteValue *bv = lmData.GetByteValue();
+
+  uint64_t lmLength = bv->GetLength();
+  LOG(INFO) << lmLength << " bytes in data field (0x7fe1, 0x1010)";
+  DLOG(INFO) << "SRC: " << this->_srcPath;
+
+  boost::filesystem::path bfPath = _srcPath;
+  bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
+
+  if ( boost::filesystem::exists(bfPath) ){
+    LOG(INFO) << ".bf file exists.";
+    return true;
+  }
+  else {
+    if (lmLength == 0)
+      bStatus = false;
+    else
+      bStatus = true;
   }
 
   return bStatus;
@@ -461,6 +575,50 @@ bool MMRNorm::ExtractData( const boost::filesystem::path dst ){
     }
     bv->WriteBuffer(outfile);
     outfile.close();
+    bStatus = true;
+  }
+
+  return bStatus;
+}
+
+bool MMRNorm::IsValid(){
+
+  namespace fs = boost::filesystem;
+
+  bool bStatus = false;
+
+  if (!this->ReadHeader()){
+    LOG(ERROR) << "Unable to read header!";
+    return false;
+  }
+
+  const gdcm::DataSet &ds = _dicomReader->GetFile().GetDataSet();
+
+  LOG(INFO) << "Expected number of bytes: " << MMRNORMBYTELENGTH;
+
+  const gdcm::Tag lmDataTag(0x7fe1, 0x1010);
+  const gdcm::DataElement &lmData = ds.GetDataElement(lmDataTag);
+  const gdcm::ByteValue *bv = lmData.GetByteValue();
+
+  uint64_t lmLength = bv->GetLength();
+  LOG(INFO) << lmLength << " bytes in data field (0x7fe1, 0x1010)";
+
+  if (lmLength != MMRNORMBYTELENGTH) {
+    LOG(INFO) << "Expected no. of bytes does not equal no. read!";
+    LOG(INFO) << "Looking for BF file...";
+
+    DLOG(INFO) << "SRC: " << this->_srcPath;
+    FileStatusCode bfStatus = CheckForSiemensBFFile(this->_srcPath, MMRNORMBYTELENGTH);
+
+    if ( bfStatus == FileStatusCode::EGOOD ) {
+      return true;
+    }
+    else {
+      LOG(ERROR) << "No norm data found in either header or .bf file!";
+      return false;
+    }
+  } 
+  else {
     bStatus = true;
   }
 
