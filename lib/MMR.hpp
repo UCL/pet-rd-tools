@@ -39,18 +39,23 @@ namespace nmtools {
 class IMMR {
 
 public:
+
+  IMMR();
+  IMMR(boost::filesystem::path src);
+
   bool SetInputFile ( boost::filesystem::path src );
   FileType GetFileType( boost::filesystem::path src );
 
   virtual bool ExtractHeader( const boost::filesystem::path dst );
   virtual bool ExtractData( const boost::filesystem::path dst )=0;
   virtual bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile)=0;
+  virtual boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype) = 0;
 
+  virtual ~IMMR(){};
 protected:
 
   bool ReadHeader();
 
-  virtual boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype) = 0;
   FileStatusCode CheckForSiemensBFFile(boost::filesystem::path src, uint64_t numOfWords);
   gdcm::Reader * _dicomReader;
   std::string _headerString;
@@ -60,24 +65,35 @@ protected:
 };
 
 class MMR32BitList : public IMMR {
+  using IMMR::IMMR;
 public:
   bool ExtractData( const boost::filesystem::path dst );
-protected:
+  bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile);
   boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype);
+
 };
 
 class MMRSino : public IMMR {
-
-protected:
+  using IMMR::IMMR;
+public:
+  bool ExtractData( const boost::filesystem::path dst );
+  bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile);
   boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype);
 };
 
 class MMRNorm : public IMMR {
+  using IMMR::IMMR;
+public:
+  //MMR Norm file byte length
+  //({344,127}+{9,344}+{504,64}+{837}+{64}+{64}+{9}+{837}) * 4
+  const uint32_t MMRNORMBYTELENGTH = 323404;
 
+  bool ExtractData( const boost::filesystem::path dst );
+  bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile);
 
-protected:
   boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype);
-  std::string cleanUpLineEncoding( std::string );
+protected:
+  std::string CleanUpLineEncoding( std::string );
 };
 
 class IRawDataFactory {
@@ -89,78 +105,47 @@ class MMRFactory : public IRawDataFactory{
 public:
   IMMR* Create( boost::filesystem::path inFile ){
 
-    std::unique_ptr<IMMR> rawData(new IMMR);
-
-    FileType fType = rawData->GetFileType( inFile );
+    FileType fType = GetFileType( inFile );
 
     if (fType == FileType::EMMRLIST)
-      return new MMR32BitList();
+      return new MMR32BitList(inFile);
 
     if (fType == FileType::EMMRSINO)
-      return new MMRSino(); 
+      return new MMRSino(inFile); 
 
     if (fType == FileType::EMMRNORM)
-      return new MMRNorm();      
+      return new MMRNorm(inFile);      
 
     return nullptr;
   }
 };
 
+IMMR::IMMR(){
+  _dicomReader = new gdcm::Reader;
+}
 
-FileType IMMR::GetFileType( boost::filesystem::path src){
+IMMR::IMMR(boost::filesystem::path src){
 
-  FileType foundFileType = FileType::EUNKNOWN;
+  _dicomReader = new gdcm::Reader;
 
-  std::unique_ptr<gdcm::Reader> dicomReader(new gdcm::Reader);
-  dicomReader->SetFileName(src.string().c_str());
-
-  if (!dicomReader->Read()) {
-    LOG(INFO) << "Unable to read as DICOM file";
-    return FileType::EERROR;
+  if (! this->SetInputFile(src) ) {
+    LOG(ERROR) << "Unable to read mMR data in: " << src;
   }
 
-  const gdcm::DataSet &ds = dicomReader->GetFile().GetDataSet();
+}
 
-  const gdcm::Tag manufacturer(0x008, 0x0070);
-  const gdcm::DataElement &pdde = ds.GetDataElement(manufacturer);
+bool IMMR::SetInputFile(boost::filesystem::path src){
 
-  std::stringstream manufacturerName;
-  manufacturerName << (char *) pdde.GetByteValue()->GetPointer();
+    _dicomReader->SetFileName(src.string().c_str());
 
-  LOG(INFO) << "Manufacturer: " << manufacturerName.str();
-
-  const gdcm::Tag model(0x008, 0x1090);
-  const gdcm::DataElement &pdde2 = ds.GetDataElement(model);
-
-  std::stringstream modelName;
-  modelName << (char *) pdde2.GetByteValue()->GetPointer();
-
-  LOG(INFO) << "Model name: " << modelName.str();
-
-  const gdcm::Tag imageType(0x0008, 0x0008);
-  const gdcm::DataElement &pdde3 = ds.GetDataElement(imageType);
-
-  std::stringstream imageTypeValue;
-  imageTypeValue << (char *) pdde3.GetByteValue()->GetPointer();
-
-  LOG(INFO) << "Image type: " << imageTypeValue.str();
-
-  if (manufacturerName.str().find("SIEMENS") != std::string::npos) {
-    DLOG(INFO) << "Manufacturer = SIEMENS";
-
-    if (modelName.str().find("Biograph_mMR") != std::string::npos) {
-      DLOG(INFO) << "Scanner = MMR";
-
-      if (imageTypeValue.str().find("ORIGINAL\\PRIMARY\\PET_LISTMODE") != std::string::npos)
-        foundFileType = FileType::EMMRLIST;
-      if (imageTypeValue.str().find("ORIGINAL\\PRIMARY\\PET_EM_SINO") != std::string::npos)
-        foundFileType = FileType::EMMRSINO;
-      if (imageTypeValue.str().find("ORIGINAL\\PRIMARY\\PET_NORM") != std::string::npos)
-        foundFileType = FileType::EMMRNORM;
+    if (!_dicomReader->Read()) {
+        LOG(ERROR) << "Unable to read as DICOM file";
+        return false;
     }
-  }
 
-  return foundFileType;
+    _srcPath = src;
+
+    return true;
 }
 
 bool IMMR::ReadHeader() {
@@ -217,6 +202,12 @@ bool IMMR::ExtractHeader( const boost::filesystem::path dst ){
     headerString << headerStringTmp.str();
   }
 
+  if (boost::filesystem::exists(dst)) {
+      LOG(ERROR) << "Header already exists at destination!";
+      LOG(ERROR) << "Refusing to over-write!";
+      return false;
+  }
+
   std::ofstream outfile(dst.string().c_str(), std::ios::out | std::ios::binary);
   if (!outfile.is_open()) {
     LOG(ERROR) << "Unable to write header to " << dst;
@@ -234,6 +225,39 @@ bool IMMR::ExtractHeader( const boost::filesystem::path dst ){
     LOG(ERROR) << "Failed to extract raw header!";
 
   return bStatus;
+}
+
+FileStatusCode IMMR::CheckForSiemensBFFile(boost::filesystem::path src, uint64_t numOfBytes) {
+  //Test for existence of associated bf file and if the length is correct
+  //according to the Interfile header.
+
+  FILE *inFile;
+
+  boost::filesystem::path bfPath = src;
+  bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
+
+  if (!(inFile = fopen(bfPath.string().c_str(), "rb"))) {
+      LOG(INFO) << "Cannot open " << bfPath.native();
+      return FileStatusCode::EIOERROR;
+  }
+
+  fseeko64(inFile, 0L, SEEK_END);
+  int64_t endOfFile = ftello64(inFile);
+
+  fclose(inFile);
+
+  LOG(INFO) << ".bf file size in bytes: " << endOfFile;
+  //uint64_t actualNoWords = endOfFile / 4;
+  //BOOST_LOG_TRIVIAL(info) << endOfFile << " / 4 = " << actualNoWords << " words";
+
+  if (endOfFile != numOfBytes) {
+    LOG(INFO) << "Expected no. of bytes does not equal no. read!";
+    return FileStatusCode::EBAD;
+  }
+
+  LOG(INFO) << bfPath << " is valid raw data file for this header.";
+  return FileStatusCode::EGOOD;
+
 }
 
 bool MMR32BitList::ExtractData( const boost::filesystem::path dst ){
@@ -291,18 +315,18 @@ bool MMR32BitList::ExtractData( const boost::filesystem::path dst ){
 
     if ( bfStatus == FileStatusCode::EGOOD ) {
       
-      fs::path bfPath = _srcPath;
+      boost::filesystem::path bfPath = _srcPath;
       bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
       try {
-        if (fs::exists(dst)) {
+        if (boost::filesystem::exists(dst)) {
           DLOG(ERROR) << "The .bf file already exists!";
           return false;
         }
         
-        fs::copy(bfPath, dst);
+        boost::filesystem::copy(bfPath, dst);
         bStatus = true;
       }
-      catch(fs::filesystem_error const &e){
+      catch(boost::filesystem::filesystem_error const &e){
         DLOG(ERROR) << "Unable to copy listmode from .bf file!";
         DLOG(ERROR) << e.what();
         return false;
@@ -327,6 +351,59 @@ bool MMR32BitList::ExtractData( const boost::filesystem::path dst ){
   return bStatus;
 }
 
+bool MMRSino::ExtractData( const boost::filesystem::path dst ){
+
+  namespace fs = boost::filesystem;
+
+  bool bStatus = false;
+
+  if (!this->ReadHeader()){
+    LOG(ERROR) << "Unable to read header!";
+    return false;
+  }
+
+  const gdcm::DataSet &ds = _dicomReader->GetFile().GetDataSet();
+
+  const gdcm::Tag lmDataTag(0x7fe1, 0x1010);
+  const gdcm::DataElement &lmData = ds.GetDataElement(lmDataTag);
+  const gdcm::ByteValue *bv = lmData.GetByteValue();
+
+  uint64_t lmLength = bv->GetLength();
+  LOG(INFO) << lmLength << " bytes in data field (0x7fe1, 0x1010)";
+
+  DLOG(INFO) << "SRC: " << this->_srcPath;
+
+  boost::filesystem::path bfPath = _srcPath;
+  bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
+
+  if ( boost::filesystem::exists(bfPath) ){
+
+    boost::filesystem::path bfPath = _srcPath;
+    bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
+    try {
+      boost::filesystem::copy(bfPath, dst);
+      bStatus = true;
+    }
+    catch(boost::filesystem::filesystem_error const &e){
+      LOG(ERROR) << "Unable to copy sinogram from .bf file!";
+      LOG(ERROR) << e.what();
+      return false;
+    }
+  }
+  else {
+    std::ofstream outfile(dst.string().c_str(), std::ios::out | std::ios::binary);
+    if (!outfile.is_open()) {
+      LOG(ERROR) << "Unable to write sinogram to " << dst;
+      return false;
+    }
+    bv->WriteBuffer(outfile);
+    outfile.close();
+    bStatus = true;
+  }
+
+  return bStatus;
+}
+
 bool MMRNorm::ExtractData( const boost::filesystem::path dst ){
 
   namespace fs = boost::filesystem;
@@ -340,10 +417,198 @@ bool MMRNorm::ExtractData( const boost::filesystem::path dst ){
 
   const gdcm::DataSet &ds = _dicomReader->GetFile().GetDataSet();
 
+  LOG(INFO) << "Expected number of bytes: " << MMRNORMBYTELENGTH;
+
+  const gdcm::Tag lmDataTag(0x7fe1, 0x1010);
+  const gdcm::DataElement &lmData = ds.GetDataElement(lmDataTag);
+  const gdcm::ByteValue *bv = lmData.GetByteValue();
+
+  uint64_t lmLength = bv->GetLength();
+  LOG(INFO) << lmLength << " bytes in data field (0x7fe1, 0x1010)";
+
+  if (lmLength != MMRNORMBYTELENGTH) {
+    LOG(INFO) << "Expected no. of bytes does not equal no. read!";
+    LOG(INFO) << "Looking for BF file...";
+
+    DLOG(INFO) << "SRC: " << this->_srcPath;
+    FileStatusCode bfStatus = CheckForSiemensBFFile(this->_srcPath, MMRNORMBYTELENGTH);
+
+    if ( bfStatus == FileStatusCode::EGOOD ) {
+
+      boost::filesystem::path bfPath = _srcPath;
+      bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
+      try {
+        boost::filesystem::copy(bfPath, dst);
+        bStatus = true;
+      }
+      catch(boost::filesystem::filesystem_error const &e){
+        LOG(ERROR) << "Unable to copy norm from .bf file!";
+        LOG(ERROR) << e.what();
+        return false;
+      }
+    }
+    else {
+      LOG(ERROR) << "No norm data found in either header or .bf file!";
+      return false;
+    }
+  } else {
+    std::ofstream outfile(dst.string().c_str(), std::ios::out | std::ios::binary);
+
+    if (!outfile.is_open()) {
+      LOG(ERROR) << "Unable to write norm to " << dst;
+      return false;
+    }
+    bv->WriteBuffer(outfile);
+    outfile.close();
+    bStatus = true;
+  }
 
   return bStatus;
 }
 
+bool MMR32BitList::ModifyHeader(const boost::filesystem::path src, const boost::filesystem::path dataFile){
+
+  std::ifstream headerFile( boost::filesystem::canonical( src ).string().c_str() );
+  std::stringstream buffer;
+  buffer << headerFile.rdbuf();
+
+  headerFile.close();
+
+  DLOG(INFO) << "Read " << src;
+
+  std::string headerInfo = buffer.str();
+
+  std::string::size_type pos = 0;
+  std::string target = "name of data file";
+
+  pos = headerInfo.find(target);
+  std::string line = headerInfo.substr(pos,headerInfo.length());
+  line = line.substr(0,line.find("\n"));
+
+  std::string newLine = "name of data file:=" + dataFile.filename().string();
+  headerInfo.replace(pos,line.length(), newLine);
+
+  std::ofstream outfile( src.string().c_str(), std::ios::out | std::ios::binary);
+
+  if ( ! outfile.is_open() ) {
+      LOG(ERROR) << "Unable to update listmode header in " << src;
+      return false;
+  }
+
+  outfile << headerInfo;
+  outfile.close();
+
+  return true;
+
+}
+
+bool MMRSino::ModifyHeader(const boost::filesystem::path src, const boost::filesystem::path dataFile){
+
+  std::ifstream headerFile( boost::filesystem::canonical( src ).string().c_str() );
+  std::stringstream buffer;
+  buffer << headerFile.rdbuf();
+
+  headerFile.close();
+
+  DLOG(INFO) << "Read " << src;
+
+  std::string headerInfo = buffer.str();
+
+  std::string::size_type pos = 0;
+  std::string target = "name of data file";
+
+  pos = headerInfo.find(target);
+  std::string line = headerInfo.substr(pos,headerInfo.length());
+  line = line.substr(0,line.find("\n"));
+
+  std::string newLine = "name of data file:=" + dataFile.filename().string();
+  headerInfo.replace(pos,line.length(), newLine);
+
+  std::ofstream outfile( src.string().c_str(), std::ios::out | std::ios::binary);
+
+  if ( ! outfile.is_open() ) {
+      LOG(ERROR) << "Unable to update sinogram header in " << src;
+      return false;
+  }
+
+  outfile << headerInfo;
+  outfile.close();
+
+  return true;
+
+}
+
+bool MMRNorm::ModifyHeader(const boost::filesystem::path src, const boost::filesystem::path dataFile){
+
+  std::ifstream headerFile( boost::filesystem::canonical( src ).string().c_str() );
+  std::stringstream buffer;
+  buffer << headerFile.rdbuf();
+
+  headerFile.close();
+
+  DLOG(INFO) << "Read " << src;
+
+  std::string headerInfo = buffer.str();
+
+  std::string::size_type pos = 0;
+  std::string target = "name of data file";
+
+  pos = headerInfo.find(target);
+  std::string line = headerInfo.substr(pos,headerInfo.length());
+  line = line.substr(0,line.find("\n"));
+
+  std::string newLine = "name of data file:=" + dataFile.filename().string()  + "\r\n";
+  headerInfo.replace(pos,line.length(), newLine);
+
+  target = "%data set [1]:={0,,";
+  pos = headerInfo.find(target);
+  line = headerInfo.substr(pos,headerInfo.length());
+  line = line.substr(0,line.find("\n"));
+
+  newLine = "%data set [1]:={0,," +  dataFile.filename().string() + "}";
+  headerInfo.replace(pos,line.length(), newLine);
+
+  std::ofstream outfile( src.string().c_str(), std::ios::out | std::ios::binary);
+
+  if ( ! outfile.is_open() ) {
+      LOG(ERROR) << "Unable to update norm header in " << src;
+      return false;
+  }
+
+  //Find /r/r/n and replace with /r/n.
+  headerInfo = CleanUpLineEncoding( headerInfo );
+
+  outfile << headerInfo;
+  outfile.close();
+
+  return true;
+
+}
+
+std::string MMRNorm::CleanUpLineEncoding( const std::string origStr ){
+  //Removes \r\r\n line endings in mMR norm header and replaces it with \r\n
+
+  std::stringstream ss;
+  ss << origStr;
+  std::string outstr;
+
+  std::string line; 
+  std::string::size_type pos = 0;
+  std::string target = "\r\r";
+
+  while (std::getline(ss, line)) {
+      DLOG(INFO) << line;
+      pos = line.find(target);
+      if (pos != std::string::npos)
+            line.replace(pos,line.length(),"\r\n");
+      outstr += line;
+  }
+
+  //Add carriage return at EOF
+  outstr += "\r\n";
+
+  return outstr;
+}
 
 boost::filesystem::path MMR32BitList::GetStdFileName( boost::filesystem::path srcFile, ContentType ctype){
 
