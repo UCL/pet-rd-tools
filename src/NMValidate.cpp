@@ -75,10 +75,13 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  //Configure glog
+  //Configure logging
   fs::path log_path = fs::complete(fs::current_path());
   log_path /= APP_NAME;
   log_path += "-";
+
+  //Pretty coloured logging (if supported)
+  FLAGS_colorlogtostderr = 1;
 
   if (vm.count("log")){
     FLAGS_alsologtostderr = 1;
@@ -116,15 +119,14 @@ int main(int argc, char **argv)
   std::unique_ptr<nm::MMRFactory> factory(new nm::MMRFactory);
   std::unique_ptr<nm::IMMR> reader(factory->Create(srcPath));
 
-  //If now valid reader found, exit.
+  //If no valid reader found, exit.
   if (reader == nullptr){
-    std::cout << std::endl;
     LOG(ERROR) << "File appears to be INVALID";
     return 1;
   }
 
+  //Check if the file is correct for the identified type.
   if (!reader->IsValid()) {
-    std::cout << std::endl;
     LOG(ERROR) << "File appears to be INVALID";
     return 1;    
   }
@@ -136,10 +138,6 @@ int main(int argc, char **argv)
   unsigned int totalTime = stopTime - startTime;
   LOG(INFO) << "Time taken: " << totalTime << " seconds";
   LOG(INFO) << "Ended: " << std::asctime(std::localtime(&stopTime));
-
-  //If reading was unsuccesful or file not valid, return non-zero value.
-  //if (fileStatus != nm::FileStatusCode::EGOOD)
-  //  return 1;
 
   return 0;
 }

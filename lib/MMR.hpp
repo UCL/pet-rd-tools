@@ -277,6 +277,12 @@ bool MMR32BitList::ExtractData( const boost::filesystem::path dst ){
     return false;
   }
 
+  if (boost::filesystem::exists(dst)) {
+    LOG(ERROR) << "The data file already exists!";
+    LOG(ERROR) << "Refusing to over-write!";
+    return false;
+  }
+
   const gdcm::DataSet &ds = _dicomReader->GetFile().GetDataSet();
 
   std::string target = "%total listmode word counts";
@@ -325,7 +331,7 @@ bool MMR32BitList::ExtractData( const boost::filesystem::path dst ){
       bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
       try {
         if (boost::filesystem::exists(dst)) {
-          DLOG(ERROR) << "The .bf file already exists!";
+          LOG(ERROR) << "The .bf file already exists!";
           return false;
         }
         
@@ -333,20 +339,20 @@ bool MMR32BitList::ExtractData( const boost::filesystem::path dst ){
         bStatus = true;
       }
       catch(boost::filesystem::filesystem_error const &e){
-        DLOG(ERROR) << "Unable to copy listmode from .bf file!";
-        DLOG(ERROR) << e.what();
+        LOG(ERROR) << "Unable to copy listmode from .bf file!";
+        LOG(ERROR) << e.what();
         return false;
       }
 
     }
     else {
-      DLOG(ERROR) << "No listmode data found in either header or .bf file!";
+      LOG(ERROR) << "No listmode data found in either header or .bf file!";
       return false;
     }
   } else {
     std::ofstream outfile(dst.string().c_str(), std::ios::out | std::ios::binary);
     if (!outfile.is_open()) {
-      DLOG(ERROR) << "Unable to write listmode to " << dst;
+      LOG(ERROR) << "Unable to write listmode to " << dst;
       return false;
     }
     bv->WriteBuffer(outfile);
@@ -414,7 +420,7 @@ bool MMR32BitList::IsValid(){
       return true;
     }
     else {
-      DLOG(ERROR) << "No listmode data found in either header or .bf file!";
+      LOG(ERROR) << "No listmode data found in either header or .bf file!";
       return false;
     }
   } 
@@ -447,6 +453,12 @@ bool MMRSino::ExtractData( const boost::filesystem::path dst ){
   LOG(INFO) << lmLength << " bytes in data field (0x7fe1, 0x1010)";
 
   DLOG(INFO) << "SRC: " << this->_srcPath;
+
+  if (boost::filesystem::exists(dst)) {
+    LOG(ERROR) << "The data file already exists!";
+    LOG(ERROR) << "Refusing to over-write!";
+    return false;
+  }
 
   boost::filesystem::path bfPath = _srcPath;
   bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
@@ -540,6 +552,12 @@ bool MMRNorm::ExtractData( const boost::filesystem::path dst ){
 
   uint64_t lmLength = bv->GetLength();
   LOG(INFO) << lmLength << " bytes in data field (0x7fe1, 0x1010)";
+
+  if (boost::filesystem::exists(dst)) {
+    LOG(ERROR) << "The data file already exists!";
+    LOG(ERROR) << "Refusing to over-write!";
+    return false;
+  }
 
   if (lmLength != MMRNORMBYTELENGTH) {
     LOG(INFO) << "Expected no. of bytes does not equal no. read!";

@@ -79,10 +79,13 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  //Configure glog
+  //Configure logging
   fs::path log_path = fs::complete(fs::current_path());
   log_path /= APP_NAME;
   log_path += "-";
+
+  //Pretty coloured logging (if supported)
+  FLAGS_colorlogtostderr = 1;
 
   if (vm.count("log")){
     FLAGS_alsologtostderr = 1;
@@ -108,6 +111,7 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  //Check if the input is a file.
   if (!fs::is_regular_file(srcPath)) {
     LOG(ERROR) << srcPath.native() << "' does not appear to be a file!";
     return 1;
