@@ -1,5 +1,5 @@
 /*
-   NMExtract.cpp
+   NMmrac2mu.cpp
 
    Author:      Benjamin A. Thomas
 
@@ -16,7 +16,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-   This program extracts raw mMR data.
+   This program generates a mu-map from Siemens mMR MRAC for PET reconstruction.
  */
 
 #include <gdcmReader.h>
@@ -24,17 +24,16 @@
 #include <boost/program_options.hpp>
 #include <glog/logging.h>
 
-#include "nmtools/MMR.hpp"
+#include "nmtools/MRAC.hpp"
 #include "EnvironmentInfo.h"
 
 int main(int argc, char **argv)
 {
 
-  const char* APP_NAME = "nm_extract";
+  const char* APP_NAME = "nm_mrac2mu";
 
-  std::string inputFilePath;
-  std::string outputDirectory = "";
-  std::string prefixName = "";
+  std::string inputDirPath;
+  std::string outputFilePath = "";
 
   //Set-up command line options
   namespace po = boost::program_options;
@@ -46,10 +45,8 @@ int main(int argc, char **argv)
     ("help,h", "Print help information")
     ("version","Print version number")
     //("verbose,v", "Be verbose")
-    ("input,i", po::value<std::string>(&inputFilePath)->required(), "Input file")
-    ("output,o", po::value<std::string>(&outputDirectory), "Output directory")
-    ("prefix,p", po::value<std::string>(&prefixName), "Prefix for filename")
-    ("noupdate", "Do not modify Interfile headers")
+    ("input,i", po::value<std::string>(&inputDirPath)->required(), "Input directory")
+    ("output,o", po::value<std::string>(&outputFilePath)->required(), "Output file")
     ("log,l", "Write log file");
 
   //Evaluate command line options
@@ -103,7 +100,7 @@ int main(int argc, char **argv)
   LOG(INFO) << "Started: " << std::asctime(std::localtime(&startTime));
   LOG(INFO) << "Running '" << APP_NAME << "' version: " << VERSION_NO;
 
-  fs::path srcPath = inputFilePath;
+  fs::path srcPath = inputDirPath;
 
   //Check if input file even exists!
   if (!fs::exists(srcPath)) {
@@ -112,21 +109,28 @@ int main(int argc, char **argv)
   }
 
   //Check if the input is a file.
-  if (!fs::is_regular_file(srcPath)) {
-    LOG(ERROR) << srcPath.native() << " does not appear to be a file!";
+  if (!fs::is_directory(srcPath)) {
+    LOG(ERROR) << srcPath.native() << " does not appear to be a  directory!";
     return EXIT_FAILURE;
   }
 
-  //Try and read input file
-  std::unique_ptr<nm::MMRFactory> factory(new nm::MMRFactory);
-  std::unique_ptr<nm::IMMR> reader(factory->Create(srcPath));
-
-  //If now valid reader found, exit.
-  if (reader == nullptr){
-    LOG(ERROR) << "Aborting!";
+  std::unique_ptr<nm::MRAC2MU> mrac(new nm::MRAC2MU(srcPath));
+ 
+  if (mrac->Update()){
+    LOG(INFO) << "Scaling and reslicing complete";
+  } else {
+    LOG(ERROR) << "Failed to scale and reslice";
     return EXIT_FAILURE;
   }
 
+  if (mrac->Write(outputFilePath)){
+    LOG(INFO) << "Writing complete";
+  } else {
+    LOG(ERROR) << "Failed to write output file!";
+    return EXIT_FAILURE;
+  }
+
+  /*
   //Create output directory.
   fs::path outDstDir = outputDirectory;
 
@@ -146,52 +150,7 @@ int main(int argc, char **argv)
       LOG(INFO) << "Unable to create output directory!";
       return EXIT_FAILURE;
     }
-  }
-
-  //Creating new filename with prefix if requested.
-  fs::path outFilePath = srcPath;
-
-  if (vm.count("prefix")) {
-    outFilePath = srcPath.remove_filename();
-    outFilePath /= prefixName;
-    outFilePath += srcPath.extension();
-    //LOG(INFO) << "New header path = " << outFilePath;
-  }
-
-  //Make new filename path for raw data
-  fs::path newDataFileName = reader->GetStdFileName(outFilePath, nm::ContentType::ERAWDATA);
-
-  fs::path dstPath = outDstDir;
-  dstPath /= newDataFileName;
-  LOG(INFO) << "Writing raw data to: " << dstPath;
-  reader->ExtractData(dstPath);
-  newDataFileName = dstPath;
-
-  fs::path newHeaderFileName = reader->GetStdFileName(outFilePath,nm::ContentType::EHEADER);
-  dstPath = outDstDir;
-  dstPath /= newHeaderFileName;
-  LOG(INFO) << "Writing header to: " << dstPath;
-
-  if (reader->ExtractHeader(dstPath)) {
-    LOG(INFO) << "Header written successfully.";
-  }
-  else {
-    LOG(ERROR) << "Header extraction failed!";
-    return EXIT_FAILURE;
-  }
-
-  newHeaderFileName = dstPath;
-
-  if (! vm.count("noupdate")) {
-    if ( reader->ModifyHeader(newHeaderFileName, newDataFileName) ){
-      LOG(INFO) << "Header updated successfully.";
-    }
-    else {
-      LOG(ERROR) << "Header update failed!";
-      return EXIT_FAILURE;
-    }
-  }
-
+  }*/
 
   //Print total execution time
   std::time_t stopTime = std::time( 0 ) ;
