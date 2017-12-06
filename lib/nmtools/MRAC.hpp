@@ -34,6 +34,7 @@
 #include <itkConstantPadImageFilter.h>
 #include <itkCropImageFilter.h>
 #include <itkDivideImageFilter.h>
+#include <itkOrientImageFilter.h>
 
 #include <glog/logging.h>
 
@@ -81,6 +82,8 @@ protected:
 
   bool Read();
   bool ScaleAndReslice();
+
+  bool WriteToInterFile(boost::filesystem::path dst) const;
 
   typename MuMapImageType::Pointer _inputImage;
   typename MuMapImageType::Pointer _muImage;
@@ -218,10 +221,19 @@ bool MRAC2MU::Read(){
     //Execute pipeline
     dicomReader->Update();
 
-    //Duplicate contents or reader into _inputImage.
+    //Orient to LPS
+    typedef typename itk::OrientImageFilter<MuMapImageType,MuMapImageType> OrienterType;
+    typename OrienterType::Pointer orienter = OrienterType::New();
+  
+    orienter->UseImageDirectionOn();
+    orienter->SetDesiredCoordinateOrientation(itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LPS);
+    orienter->SetInput(dicomReader->GetOutput());
+    orienter->Update();
+
+    //Duplicate contents of reader into _inputImage.
     typedef typename itk::ImageDuplicator<MuMapImageType> DuplicatorType;
     typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
-    duplicator->SetInputImage(dicomReader->GetOutput());
+    duplicator->SetInputImage(orienter->GetOutput());
     duplicator->Update();
     _inputImage = duplicator->GetOutput();
 
@@ -235,6 +247,10 @@ bool MRAC2MU::Read(){
   }
 
   DLOG(INFO) << "Reading complete";
+
+  //TODO: Finish filling Interfile header
+  _header.clear();
+  _header += "!INTERFILE";
 
   return true;
 
@@ -360,6 +376,10 @@ bool MRAC2MU::ScaleAndReslice(){
 
 bool MRAC2MU::Write(boost::filesystem::path dst) const {
 
+  if (dst.extension() == ".hv"){
+   return WriteToInterFile(dst);
+  }
+
   //Write output file
   typedef typename itk::ImageFileWriter<MuMapImageType> WriterType; 
 
@@ -377,6 +397,43 @@ bool MRAC2MU::Write(boost::filesystem::path dst) const {
 
   return true;
 
+}
+
+bool MRAC2MU::WriteToInterFile(boost::filesystem::path dst) const {
+
+  boost::filesystem:: path altPath = boost::filesystem::change_extension(dst, ".mhd");
+  //Write output file
+  typedef typename itk::ImageFileWriter<MuMapImageType> WriterType; 
+
+  typename WriterType::Pointer writer = WriterType::New();
+  writer->SetFileName( altPath.string().c_str() );
+  writer->SetInput( _muImage );
+
+  try {
+    writer->Update();
+  }
+  catch (itk::ExceptionObject &ex){
+    LOG(ERROR) << " Could not write output data!";
+    return false;    
+  }
+
+  std::string outputHeader = GetInterfileHdr();
+
+  altPath = boost::filesystem::change_extension(dst, ".hv");
+  
+  std::ofstream infoStream;
+
+  if ( infoStream ) {
+    infoStream.open(altPath.string().c_str());
+    infoStream << outputHeader << std::endl;
+    infoStream.close();
+    LOG(INFO) << "Wrote Interfile header to " << altPath;
+  } else {
+    LOG(INFO) << "Could not write Interfile header to " << altPath;
+    return false;
+  }
+
+  return true;
 }
 
 } //namespace nmtools
