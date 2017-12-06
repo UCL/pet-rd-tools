@@ -24,7 +24,7 @@
 #include <boost/program_options.hpp>
 #include <glog/logging.h>
 
-#include "MMR.hpp"
+#include "nmtools/MMR.hpp"
 #include "EnvironmentInfo.h"
 
 int main(int argc, char **argv)
