@@ -35,10 +35,13 @@
 #include <itkCropImageFilter.h>
 #include <itkDivideImageFilter.h>
 #include <itkOrientImageFilter.h>
+#include <itkMinimumMaximumImageCalculator.h>
 
 #include <glog/logging.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/any.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "json/json.hpp"
 
@@ -84,6 +87,8 @@ protected:
   bool ScaleAndReslice();
 
   bool WriteToInterFile(boost::filesystem::path dst) const;
+
+  bool UpdateInterfile(const std::string key, const boost::any info);
 
   typename MuMapImageType::Pointer _inputImage;
   typename MuMapImageType::Pointer _muImage;
@@ -250,10 +255,127 @@ bool MRAC2MU::Read(){
 
   //TODO: Finish filling Interfile header
   _header.clear();
-  _header += "!INTERFILE";
+
+  std::stringstream ss;
+
+  ss << "!INTERFILE:=" << std::endl;
+  ss << "%comment:=created with nm_mrac2mu for mMR data" << std::endl;
+  ss << "!originating system:=2008" << std::endl;
+
+  ss << std::endl << "!GENERAL DATA:=" << std::endl;
+  ss << "!name of data file:=<%%DATAFILE%%>";
+  
+  ss << std::endl << "!GENERAL IMAGE DATA:=" << std::endl;
+  ss << "!type of data := PET" << std::endl;
+
+  ss << std::endl << "%study date (yyyy:mm:dd):=<%%STUDYDATE%%>"  << std::endl;
+  ss << "%study time (hh:mm:ss GMT+00:00):=<%%STUDYTIME%%>" << std::endl;
+  ss << "imagedata byte order:=LITTLEENDIAN" << std::endl;
+  ss << "%patient orientation:=HFS" << std::endl;
+  ss << "!PET data type:=image" << std::endl;
+  ss << "number format:=float" << std::endl;
+  ss << "!number of bytes per pixel:=4" << std::endl;
+  ss << "number of dimensions:=3" << std::endl;
+  ss << "matrix axis label[1]:=x" << std::endl;
+  ss << "matrix axis label[2]:=y" << std::endl;
+  ss << "matrix axis label[3]:=z" << std::endl;
+  ss << "matrix size[1]:=<%%NX%%>" << std::endl;
+  ss << "matrix size[2]:=<%%NY%%>" << std::endl;
+  ss << "matrix size[3]:=<%%NZ%%>" << std::endl;
+  ss << "scaling factor (mm/pixel) [1]:=<%%SX%%>" << std::endl;
+  ss << "scaling factor (mm/pixel) [2]:=<%%SY%%>" << std::endl;
+  ss << "scaling factor (mm/pixel) [3]:=<%%SZ%%>" << std::endl;
+  ss << "start horizontal bed position (mm):=-10" << std::endl;
+  ss << "end horizontal bed position (mm):=-10" << std::endl;
+  ss << "start vertical bed position (mm):=0.0" << std::endl;
+
+  ss << std::endl << "!IMAGE DATA DESCRIPTION:=" << std::endl;
+  ss << "!total number of data sets:=1" << std::endl;
+  ss << "number of time frames:=1" << std::endl;
+  ss << "!image duration (sec)[1]:=0" << std::endl;
+  ss << "!image relative start time (sec)[1]:=0" << std::endl;
+
+  ss << std::endl << "%SUPPLEMENTARY ATTRIBUTES:=" << std::endl;
+  ss << "quantification units:=1/cm" << std::endl;
+  ss << "slice orientation:=Transverse" << std::endl;
+  ss << "%image zoom:=1" << std::endl;
+  ss << "%x-offset (mm):=0.0" << std::endl;
+  ss << "%y-offset (mm):=0.0" << std::endl;
+  ss << "%image slope:=1" << std::endl;
+  ss << "%image intercept:=0.0" << std::endl;
+  ss << "maximum pixel count:=<%%MAXVAL%%>" << std::endl;
+  ss << "minimum pixel count:=<%%MINVAL%%>" << std::endl;
+
+  ss << "!END OF INTERFILE :=" << std::endl;
+
+  _header = ss.str();
 
   return true;
 
+}
+
+bool MRAC2MU::UpdateInterfile(const std::string key, const boost::any info){
+
+  std::string updateStr;
+
+  bool bStatus = false;
+
+  try {
+    updateStr = boost::any_cast<std::string>(info);
+    bStatus=true;
+  }
+  catch (boost::bad_any_cast &e) {
+
+  }
+
+  if (!bStatus){
+    try {
+      updateStr = boost::lexical_cast<std::string>(boost::any_cast<const char *>(info));
+      bStatus=true;
+    }
+    catch (boost::bad_any_cast &e) {
+
+    }
+  }
+
+  if (!bStatus){
+    try {
+      updateStr = boost::lexical_cast<std::string>(boost::any_cast<float>(info));
+      bStatus=true;
+    }
+    catch (boost::bad_any_cast &e) {
+      
+    }
+  }
+
+  if (!bStatus){
+    try {
+      updateStr = boost::lexical_cast<std::string>(boost::any_cast<int>(info));
+      bStatus=true;
+    }
+    catch (boost::bad_any_cast &e) {
+      
+    }
+  }
+
+  if (!bStatus){
+    LOG(WARNING) << "Unable to find conversion for Interfile header update";
+    return false;
+  }
+
+  std::string target = "<%%" + key + "%%>";
+  std::string::size_type n;
+
+  n = _header.find(target);
+
+  if (n == std::string::npos){
+    LOG(WARNING) << "Interfile replacement key: " << target << " not found!";
+    return false; 
+  }
+
+  _header.replace(n,target.length(),updateStr);
+
+  return bStatus;
 }
 
 bool MRAC2MU::ScaleAndReslice(){
@@ -371,6 +493,32 @@ bool MRAC2MU::ScaleAndReslice(){
     return false;
   }
 
+  typedef typename itk::MinimumMaximumImageCalculator <MuMapImageType> ImageCalculatorFilterType;
+  typename ImageCalculatorFilterType::Pointer minmax = ImageCalculatorFilterType::New();
+  minmax->SetImage(_muImage);
+
+  try {
+    minmax->Compute();
+  } catch (itk::ExceptionObject &ex){
+    //std::cout << ex << std::endl;
+    LOG(ERROR) << "Unable to calculate min/max!";
+    return false;
+  }
+
+  //Update the Interfile header with new sizes etc.
+  const MuMapImageType::SizeType& size = _muImage->GetLargestPossibleRegion().GetSize();
+  this->UpdateInterfile("NX", int(size[0]));
+  this->UpdateInterfile("NY", int(size[1]));
+  this->UpdateInterfile("NZ", int(size[2]));
+
+  const MuMapImageType::SpacingType& voxSize = _muImage->GetSpacing();
+  this->UpdateInterfile("SX", float(voxSize[0]));
+  this->UpdateInterfile("SY", float(voxSize[1]));
+  this->UpdateInterfile("SZ", float(voxSize[2]));  
+
+  this->UpdateInterfile("MAXVAL", float(minmax->GetMaximum()));
+  this->UpdateInterfile("MINVAL", float(minmax->GetMinimum()));
+
   return true;
 }
 
@@ -425,7 +573,7 @@ bool MRAC2MU::WriteToInterFile(boost::filesystem::path dst) const {
 
   if ( infoStream ) {
     infoStream.open(altPath.string().c_str());
-    infoStream << outputHeader << std::endl;
+    infoStream << outputHeader;
     infoStream.close();
     LOG(INFO) << "Wrote Interfile header to " << altPath;
   } else {
