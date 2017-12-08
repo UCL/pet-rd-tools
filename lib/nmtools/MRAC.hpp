@@ -22,6 +22,9 @@
 #ifndef MRAC_HPP
 #define MRAC_HPP
 
+#include <iostream>
+#include <string>
+
 #include <itkImage.h>
 #include <itkImageSeriesReader.h>
 #include <itkImageFileWriter.h>
@@ -43,6 +46,7 @@
 #include <boost/any.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include "nmtools/Common.hpp"
 #include "json/json.hpp"
 
 namespace nmtools {
@@ -79,16 +83,19 @@ public:
   const typename MuMapImageType::Pointer GetOutput();
   std::string GetInterfileHdr() const;
 
-  bool Write(boost::filesystem::path dst) const;
+  bool Write(boost::filesystem::path dst);
 
 protected:
 
   bool Read();
   bool ScaleAndReslice();
 
-  bool WriteToInterFile(boost::filesystem::path dst) const;
+  bool WriteToInterFile(boost::filesystem::path dst);
 
   bool UpdateInterfile(const std::string key, const boost::any info);
+
+  bool GetStudyDate(std::string &studyDate);
+  bool GetStudyTime(std::string &studyTime);
 
   typename MuMapImageType::Pointer _inputImage;
   typename MuMapImageType::Pointer _muImage;
@@ -378,6 +385,41 @@ bool MRAC2MU::UpdateInterfile(const std::string key, const boost::any info){
   return bStatus;
 }
 
+bool MRAC2MU::GetStudyDate(std::string &studyDate){
+
+  std::string infoStr;
+
+  bool bStatus = _pDicomInfo->GetValueFromTag("0008|0020",infoStr);
+
+  if (!bStatus){
+    studyDate = "";
+    return false;
+  }
+
+  LOG(INFO) << "Study date: " << infoStr;
+
+  studyDate = infoStr.substr(0,4) + ":" + infoStr.substr(4,2) + ":" + infoStr.substr(6,2);
+
+  return true;
+}
+
+bool MRAC2MU::GetStudyTime(std::string &studyTime){
+
+  std::string infoStr;
+
+  bool bStatus = _pDicomInfo->GetValueFromTag("0008|0030",infoStr);
+
+  if (!bStatus){
+    studyTime = "";
+    return false;
+  }
+
+  LOG(INFO) << "Study time: " << infoStr;
+  studyTime = infoStr.substr(0,2) + ":" + infoStr.substr(2,2) + ":" + infoStr.substr(4,2);
+
+  return true;
+}
+
 bool MRAC2MU::ScaleAndReslice(){
 
   typedef typename itk::DivideImageFilter<MuMapImageType, MuMapImageType, MuMapImageType> DivideFilterType;
@@ -519,10 +561,18 @@ bool MRAC2MU::ScaleAndReslice(){
   this->UpdateInterfile("MAXVAL", float(minmax->GetMaximum()));
   this->UpdateInterfile("MINVAL", float(minmax->GetMinimum()));
 
+  std::string studyDate;
+  if (GetStudyDate(studyDate))
+    this->UpdateInterfile("STUDYDATE", studyDate);
+
+  std::string studyTime;
+  if (GetStudyTime(studyTime))
+    this->UpdateInterfile("STUDYTIME", studyTime);
+
   return true;
 }
 
-bool MRAC2MU::Write(boost::filesystem::path dst) const {
+bool MRAC2MU::Write(boost::filesystem::path dst) {
 
   if (dst.extension() == ".hv"){
    return WriteToInterFile(dst);
@@ -547,9 +597,9 @@ bool MRAC2MU::Write(boost::filesystem::path dst) const {
 
 }
 
-bool MRAC2MU::WriteToInterFile(boost::filesystem::path dst) const {
+bool MRAC2MU::WriteToInterFile(boost::filesystem::path dst){
 
-  boost::filesystem:: path altPath = boost::filesystem::change_extension(dst, ".mhd");
+  boost::filesystem::path altPath = boost::filesystem::change_extension(dst, ".mhd");
   //Write output file
   typedef typename itk::ImageFileWriter<MuMapImageType> WriterType; 
 
@@ -564,6 +614,10 @@ bool MRAC2MU::WriteToInterFile(boost::filesystem::path dst) const {
     LOG(ERROR) << " Could not write output data!";
     return false;    
   }
+
+  //Put new data file in header.
+  boost::filesystem::path dataFile =  boost::filesystem::change_extension(dst, ".raw");
+  this->UpdateInterfile("DATAFILE", dataFile.string());
 
   std::string outputHeader = GetInterfileHdr();
 
