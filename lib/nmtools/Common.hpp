@@ -16,6 +16,8 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+  Common utils. DICOM reading.
+  
  */
 
 #ifndef COMMON_HPP
@@ -67,6 +69,13 @@ bool GetTagInfo(const gdcm::DataSet &ds, const gdcm::Tag tag, std::string &dst){
 
 FileType GetFileType( boost::filesystem::path src){
 
+  //Extracts information via DICOM to determine what kind of mMR
+  //raw data type we're dealing with.
+  //
+  //Will check for list mode, sinograms and norms.
+  //
+  //TODO: Support physio files? (11/12/2017)
+
   FileType foundFileType = FileType::EUNKNOWN;
 
   std::unique_ptr<gdcm::Reader> dicomReader(new gdcm::Reader);
@@ -77,8 +86,10 @@ FileType GetFileType( boost::filesystem::path src){
     return FileType::EERROR;
   }
 
+  //Get dataset via GDCM
   const gdcm::DataSet &ds = dicomReader->GetFile().GetDataSet();
 
+  //Read manufacturer name.
   const gdcm::Tag manufacturer(0x008, 0x0070);
   std::string manufacturerName;
   if (!GetTagInfo(ds,manufacturer,manufacturerName)){
@@ -88,6 +99,7 @@ FileType GetFileType( boost::filesystem::path src){
 
   LOG(INFO) << "Manufacturer: " << manufacturerName;
 
+  //Read model of scanner
   const gdcm::Tag model(0x008, 0x1090);
   std::string modelName;
   if (!GetTagInfo(ds,model,modelName)){
@@ -96,6 +108,7 @@ FileType GetFileType( boost::filesystem::path src){
   }
   LOG(INFO) << "Model name: " << modelName;
 
+  //Get image tpye description
   const gdcm::Tag imageType(0x0008, 0x0008);
   std::string imageTypeValue;
   if (!GetTagInfo(ds,imageType,imageTypeValue)){

@@ -36,6 +36,7 @@ namespace nmtools {
 
 class IMMR {
 
+//Base class for mMR. Splits Interfile header and raw data
 public:
 
   IMMR();
@@ -52,6 +53,7 @@ public:
   virtual boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype) = 0;
 
   virtual ~IMMR(){};
+
 protected:
 
   bool ReadHeader();
@@ -65,6 +67,8 @@ protected:
 };
 
 class MMR32BitList : public IMMR {
+//Derived class for handling 32-bit list mode data.
+
   using IMMR::IMMR;
 public:
   bool IsValid();
@@ -75,6 +79,8 @@ public:
 };
 
 class MMRSino : public IMMR {
+//Derived class for handling sinogram data.
+
   using IMMR::IMMR;
 public:
   bool IsValid();
@@ -84,6 +90,8 @@ public:
 };
 
 class MMRNorm : public IMMR {
+//Derived class for handling normalisation files.
+
   using IMMR::IMMR;
 public:
   //MMR Norm file byte length
@@ -93,13 +101,15 @@ public:
   bool IsValid();
   bool ExtractData( const boost::filesystem::path dst );
   bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile);
-
   boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype);
 protected:
+  //Deal with EOF in norm header.
   std::string CleanUpLineEncoding( std::string );
 };
 
 class IRawDataFactory {
+//Factory that returns suitable child for given data.
+
 public:
   virtual IMMR* Create( boost::filesystem::path inFile )=0;
 };
@@ -123,10 +133,12 @@ public:
   }
 };
 
+//Constructor
 IMMR::IMMR(){
   _dicomReader = new gdcm::Reader;
 }
 
+//Constructor with path.
 IMMR::IMMR(boost::filesystem::path src){
 
   _dicomReader = new gdcm::Reader;
@@ -137,6 +149,7 @@ IMMR::IMMR(boost::filesystem::path src){
 
 }
 
+//On set input, try and read.
 bool IMMR::SetInputFile(boost::filesystem::path src){
 
     _dicomReader->SetFileName(src.string().c_str());
@@ -151,6 +164,7 @@ bool IMMR::SetInputFile(boost::filesystem::path src){
     return true;
 }
 
+//Header extraction
 bool IMMR::ReadHeader() {
 
   const gdcm::DataSet &ds = _dicomReader->GetFile().GetDataSet();
@@ -184,6 +198,7 @@ bool IMMR::ReadHeader() {
   return false;
 }
 
+//Header extraction and writing to file dst.
 bool IMMR::ExtractHeader( const boost::filesystem::path dst ){
 
   bool bStatus = false;
@@ -269,6 +284,7 @@ FileStatusCode IMMR::CheckForSiemensBFFile(boost::filesystem::path src, uint64_t
 
 }
 
+//Extract raw data and write to dst.
 bool MMR32BitList::ExtractData( const boost::filesystem::path dst ){
 
   namespace fs = boost::filesystem;
@@ -366,6 +382,7 @@ bool MMR32BitList::ExtractData( const boost::filesystem::path dst ){
   return bStatus;
 }
 
+//Check if mMR list mode file is valid.
 bool MMR32BitList::IsValid(){
 
   namespace fs = boost::filesystem;
@@ -434,7 +451,7 @@ bool MMR32BitList::IsValid(){
   return bStatus;
 }
 
-
+//Extract sinogram data.
 bool MMRSino::ExtractData( const boost::filesystem::path dst ){
 
   namespace fs = boost::filesystem;
@@ -494,6 +511,7 @@ bool MMRSino::ExtractData( const boost::filesystem::path dst ){
   return bStatus;
 }
 
+//Check if sinogram is valid.
 bool MMRSino::IsValid(){
 
   namespace fs = boost::filesystem;
@@ -505,6 +523,8 @@ bool MMRSino::IsValid(){
     return false;
   }
 
+  //Due to compression, this isn't a real check.
+  //TODO: check for span-1 at least (11/12/2017).
   LOG(WARNING) << "Cannot check sinogram length due to compression.";
 
   const gdcm::DataSet &ds = _dicomReader->GetFile().GetDataSet();
@@ -534,6 +554,7 @@ bool MMRSino::IsValid(){
   return bStatus;
 }
 
+//Extract norm raw data.
 bool MMRNorm::ExtractData( const boost::filesystem::path dst ){
 
   namespace fs = boost::filesystem;
@@ -602,6 +623,7 @@ bool MMRNorm::ExtractData( const boost::filesystem::path dst ){
   return bStatus;
 }
 
+//Check if norm is valid.
 bool MMRNorm::IsValid(){
 
   namespace fs = boost::filesystem;
@@ -646,6 +668,7 @@ bool MMRNorm::IsValid(){
   return bStatus;
 }
 
+//Re-write list mode data file location in header.
 bool MMR32BitList::ModifyHeader(const boost::filesystem::path src, const boost::filesystem::path dataFile){
 
   std::ifstream headerFile( boost::filesystem::canonical( src ).string().c_str() );
@@ -682,6 +705,7 @@ bool MMR32BitList::ModifyHeader(const boost::filesystem::path src, const boost::
 
 }
 
+//Re-write sinogram data file location in header.
 bool MMRSino::ModifyHeader(const boost::filesystem::path src, const boost::filesystem::path dataFile){
 
   std::ifstream headerFile( boost::filesystem::canonical( src ).string().c_str() );
@@ -718,6 +742,7 @@ bool MMRSino::ModifyHeader(const boost::filesystem::path src, const boost::files
 
 }
 
+//Re-write norm data file location in header.
 bool MMRNorm::ModifyHeader(const boost::filesystem::path src, const boost::filesystem::path dataFile){
 
   std::ifstream headerFile( boost::filesystem::canonical( src ).string().c_str() );
@@ -765,8 +790,8 @@ bool MMRNorm::ModifyHeader(const boost::filesystem::path src, const boost::files
 
 }
 
+//Removes \r\r\n line endings in mMR norm header and replaces it with \r\n
 std::string MMRNorm::CleanUpLineEncoding( const std::string origStr ){
-  //Removes \r\r\n line endings in mMR norm header and replaces it with \r\n
 
   std::stringstream ss;
   ss << origStr;
@@ -790,6 +815,7 @@ std::string MMRNorm::CleanUpLineEncoding( const std::string origStr ){
   return outstr;
 }
 
+//Create destination filename for list mode.
 boost::filesystem::path MMR32BitList::GetStdFileName( boost::filesystem::path srcFile, ContentType ctype){
 
   boost::filesystem::path outputPath = srcFile.filename().stem();
@@ -802,6 +828,7 @@ boost::filesystem::path MMR32BitList::GetStdFileName( boost::filesystem::path sr
   return outputPath;
 }
 
+//Create destination filename for sinogram.
 boost::filesystem::path MMRSino::GetStdFileName( boost::filesystem::path srcFile, ContentType ctype){
 
   boost::filesystem::path outputPath = srcFile.filename().stem();
@@ -814,6 +841,7 @@ boost::filesystem::path MMRSino::GetStdFileName( boost::filesystem::path srcFile
   return outputPath;
 }
 
+//Create destination filename for norm.
 boost::filesystem::path MMRNorm::GetStdFileName( boost::filesystem::path srcFile, ContentType ctype){
 
   boost::filesystem::path outputPath = srcFile.filename().stem();
