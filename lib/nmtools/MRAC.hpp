@@ -51,8 +51,12 @@
 
 namespace nmtools {
 
+//All images are 3D 32-bit float ITK images.
 typedef typename itk::Image<float, 3 >  MuMapImageType;
 
+//Default parameters for reslicing
+//FOV = 700mm; voxel size = [2.09,2.09,2.03];
+//Matrix size: [344,344,127].
 const nlohmann::json resliceDefaultParams = R"(
 {
   "FOV": 700.0,
@@ -66,48 +70,75 @@ const nlohmann::json resliceDefaultParams = R"(
 )"_json;
 
 class MRAC2MU {
+  //Class for converting from mMR MRAC to mu values.
 
   typedef itk::GDCMImageIO ImageIOType;
 
 public:
 
+  //Either just empty constructor, with input directory or
+  //with input directory and user-specified json params.
   MRAC2MU(){};
   MRAC2MU(boost::filesystem::path src);
   MRAC2MU(boost::filesystem::path src, nlohmann::json params);
 
+  //Set input file and attempt to read.
   bool SetInput(boost::filesystem::path src);
+
+  //Accept alternative reslicing parameters.
   void SetParams(nlohmann::json params);
 
+  //Trigger exexcution
   bool Update();
 
+  //Return final image.
   const typename MuMapImageType::Pointer GetOutput();
+
+  //Get manufactured Interfile header. 
   std::string GetInterfileHdr() const;
 
+  //Write file(s) to dst.
   bool Write(boost::filesystem::path dst);
 
 protected:
 
+  //File reading
   bool Read();
+
+  Do reslicing etc.
   bool ScaleAndReslice();
 
+  //Write interfile case.
   bool WriteToInterFile(boost::filesystem::path dst);
 
+  //Modify header 
   bool UpdateInterfile(const std::string key, const boost::any info);
 
+  //Grab info from DICOM data.
   bool GetStudyDate(std::string &studyDate);
   bool GetStudyTime(std::string &studyTime);
 
+  //Original image
   typename MuMapImageType::Pointer _inputImage;
+
+  //Output image
   typename MuMapImageType::Pointer _muImage;
+
+  //Interfile header
   std::string _header;
 
+  //DICOM data
   typename ImageIOType::Pointer _pDicomInfo;
 
+  //Source path
   boost::filesystem::path _srcPath;
+
+  //JSON params for reslicing.
   nlohmann::json _params = resliceDefaultParams;
 
 };
 
+//Construct object from source directory.
 MRAC2MU::MRAC2MU(boost::filesystem::path src){
 
   if (!SetInput(src))
@@ -117,6 +148,8 @@ MRAC2MU::MRAC2MU(boost::filesystem::path src){
 
 }
 
+//Construct object from source directory and use user-specified
+//params.
 MRAC2MU::MRAC2MU(boost::filesystem::path src, nlohmann::json params){
 
   if (!SetInput(src))
@@ -126,7 +159,10 @@ MRAC2MU::MRAC2MU(boost::filesystem::path src, nlohmann::json params){
   DLOG(INFO) << "JSON = " << std::setw(4) << _params;
 }
 
+//Check if the source dir is what is expected.
 bool MRAC2MU::SetInput(boost::filesystem::path src){
+  //TODO: Should probably check whether src contains
+  //DICOM data. (11/12/2017)
 
   //Check if input file even exists!
   if (!boost::filesystem::exists(src)) {
@@ -147,24 +183,31 @@ bool MRAC2MU::SetInput(boost::filesystem::path src){
   return Read();
 }
 
+//Use user-specified reslicing parameters.
 void MRAC2MU::SetParams(nlohmann::json params){
-  //TODO: validate JSON inputs
+  //TODO: validate JSON inputs (11/12/2017)
 
   _params = params;
 }
 
+//Run pipeline
 bool MRAC2MU::Update(){
   return ScaleAndReslice();
 }
 
+//Get final image.
 const typename MuMapImageType::Pointer MRAC2MU::GetOutput(){
   return _muImage;
 }
 
+//Return header.
 std::string MRAC2MU::GetInterfileHdr() const {
   return _header;
 }
 
+//- Reads input directory with GDCM (via ITK).
+//- Creates image from slices and orients to LPS.
+//- Creates Interfile skeleton.
 bool MRAC2MU::Read(){
 
   //Generic DICOM to ITK image read.
@@ -321,6 +364,8 @@ bool MRAC2MU::Read(){
 
 }
 
+//Insert info. into Interfile header.
+//Casting might not be totally safe.
 bool MRAC2MU::UpdateInterfile(const std::string key, const boost::any info){
 
   std::string updateStr;
@@ -385,6 +430,7 @@ bool MRAC2MU::UpdateInterfile(const std::string key, const boost::any info){
   return bStatus;
 }
 
+//Get study date from DICOM and convert from 'YYYYMMDD' to 'YYYY:MM:DD'.
 bool MRAC2MU::GetStudyDate(std::string &studyDate){
 
   std::string infoStr;
@@ -403,6 +449,7 @@ bool MRAC2MU::GetStudyDate(std::string &studyDate){
   return true;
 }
 
+//Get study time from DICOM and convert from 'HHMMSS.mmmmmm' to 'HH:MM:SS'.
 bool MRAC2MU::GetStudyTime(std::string &studyTime){
 
   std::string infoStr;
@@ -420,6 +467,8 @@ bool MRAC2MU::GetStudyTime(std::string &studyTime){
   return true;
 }
 
+//Divide by 10000 to get mu-values (cm-1).
+//Interpolate and reslice according to JSON params.
 bool MRAC2MU::ScaleAndReslice(){
 
   typedef typename itk::DivideImageFilter<MuMapImageType, MuMapImageType, MuMapImageType> DivideFilterType;
@@ -427,10 +476,12 @@ bool MRAC2MU::ScaleAndReslice(){
   typedef typename itk::IdentityTransform< double, 3 > TransformType;
   typedef typename itk::LinearInterpolateImageFunction< MuMapImageType, double > InterpolatorType;
 
+  //Linear interpolation and identity transform.
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
   TransformType::Pointer transform = TransformType::New();
   transform->SetIdentity();
 
+  //Grab original voxel and matrix size.
   const MuMapImageType::SpacingType& inputSpacing =
     _inputImage->GetSpacing();
   const MuMapImageType::RegionType& inputRegion =
@@ -438,11 +489,14 @@ bool MRAC2MU::ScaleAndReslice(){
   const MuMapImageType::SizeType& inputSize =
     inputRegion.GetSize();
 
+  //Get new voxel size from JSON params.
+  //Unsafe.
   MuMapImageType::SpacingType outputSpacing;
   outputSpacing[0] = _params["px"];
   outputSpacing[1] = _params["py"];
   outputSpacing[2] = _params["pz"];
 
+  //Reslice to new matrix size.
   MuMapImageType::SizeType   outputSize;
   typedef MuMapImageType::SizeType::SizeValueType SizeValueType;
   outputSize[0] = static_cast<SizeValueType>(inputSize[0] * inputSpacing[0] / outputSpacing[0] + .5);
@@ -459,8 +513,6 @@ bool MRAC2MU::ScaleAndReslice(){
   resampler->SetOutputDirection ( _inputImage->GetDirection());
   resampler->SetSize ( outputSize );
 
-  //Z-flip ?
-
   try { 
   resampler->Update ();
   }
@@ -470,11 +522,12 @@ bool MRAC2MU::ScaleAndReslice(){
     return false;
   }
 
+  //Scale to mu-values
   DivideFilterType::Pointer divide = DivideFilterType::New();
   divide->SetInput( resampler->GetOutput() );
   divide->SetConstant( 10000.0 );
 
-  //pad xy
+  //Pad x-y
   MuMapImageType::SizeType lowerExtendRegion;
   lowerExtendRegion[0] = 100;
   lowerExtendRegion[1] = 100;
@@ -503,7 +556,7 @@ bool MRAC2MU::ScaleAndReslice(){
     return false;
   }
 
-  //crop in z
+  //crop in z direction.
   MuMapImageType::SizeType lcropSize;
   lcropSize[0] = 0;
   lcropSize[1] = 0;
@@ -535,6 +588,7 @@ bool MRAC2MU::ScaleAndReslice(){
     return false;
   }
 
+  //Get max and min voxel values to insert into Interfile header.
   typedef typename itk::MinimumMaximumImageCalculator <MuMapImageType> ImageCalculatorFilterType;
   typename ImageCalculatorFilterType::Pointer minmax = ImageCalculatorFilterType::New();
   minmax->SetImage(_muImage);
@@ -572,6 +626,7 @@ bool MRAC2MU::ScaleAndReslice(){
   return true;
 }
 
+//Dump image (and header if applicable) to disk.
 bool MRAC2MU::Write(boost::filesystem::path dst) {
 
   if (dst.extension() == ".hv"){
@@ -597,6 +652,7 @@ bool MRAC2MU::Write(boost::filesystem::path dst) {
 
 }
 
+//Write Interfile header and image pair to disk.
 bool MRAC2MU::WriteToInterFile(boost::filesystem::path dst){
 
   boost::filesystem::path altPath = boost::filesystem::change_extension(dst, ".mhd");
