@@ -43,8 +43,6 @@ before_script:
   -DBUILD_TESTING=OFF -DITK_USE_SYSTEM_GDCM=ON -DModule_ITKReview=ON
   -DGDCM_DIR=${GDCM_BUILD_DIR}
 - make --jobs=$NUM_THREADS --keep-going
-- cd $HOME
-- mkdir build
-- cd build
+- cd $HOME/build
 - cmake ../petmr-rd-tools -DCMAKE_BUILD_TYPE=Release
 script: cmake --build
