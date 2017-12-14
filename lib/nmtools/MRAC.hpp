@@ -79,7 +79,7 @@ public:
   //Either just empty constructor, with input directory or
   //with input directory and user-specified json params.
   MRAC2MU(){};
-  MRAC2MU(boost::filesystem::path src);
+  explicit MRAC2MU(boost::filesystem::path src);
   MRAC2MU(boost::filesystem::path src, nlohmann::json params);
 
   //Set input file and attempt to read.
@@ -105,14 +105,14 @@ protected:
   //File reading
   bool Read();
 
-  Do reslicing etc.
+  //Do reslicing etc.
   bool ScaleAndReslice();
 
   //Write interfile case.
   bool WriteToInterFile(boost::filesystem::path dst);
 
   //Modify header 
-  bool UpdateInterfile(const std::string key, const boost::any info);
+  bool UpdateInterfile(const std::string &key, const boost::any info);
 
   //Grab info from DICOM data.
   bool GetStudyDate(std::string &studyDate);
@@ -249,8 +249,10 @@ bool MRAC2MU::Read(){
     //Load directory
     nameGenerator->SetDirectory(pathToSeries);
 
-    typedef std::vector<std::string> SeriesIdContainer;
-    const SeriesIdContainer &seriesUID = nameGenerator->GetSeriesUIDs();
+    //TODO: Should probably check Series UIDs here 14/12/2017
+    //typedef std::vector<std::string> SeriesIdContainer;
+    //const SeriesIdContainer &seriesUID = nameGenerator->GetSeriesUIDs();
+
     const typename ReaderType::FileNamesContainer &fileNames = nameGenerator->GetInputFileNames();
     nameGenerator->Update();
 
@@ -366,7 +368,7 @@ bool MRAC2MU::Read(){
 
 //Insert info. into Interfile header.
 //Casting might not be totally safe.
-bool MRAC2MU::UpdateInterfile(const std::string key, const boost::any info){
+bool MRAC2MU::UpdateInterfile(const std::string &key, const boost::any info){
 
   std::string updateStr;
 

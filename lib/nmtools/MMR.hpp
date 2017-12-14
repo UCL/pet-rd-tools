@@ -40,7 +40,7 @@ class IMMR {
 public:
 
   IMMR();
-  IMMR(boost::filesystem::path src);
+  explicit IMMR(boost::filesystem::path src);
 
   bool SetInputFile ( boost::filesystem::path src );
   FileType GetFileType( boost::filesystem::path src );
