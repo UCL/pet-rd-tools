@@ -27,6 +27,7 @@ before_script:
 - export GDCM_SOURCE_DIR=$HOME/gdcm-2.8.4
 - export GDCM_BUILD_DIR=$HOME/gdcm-2.8.4-build
 - ls -alh
+- pwd
 - cd $HOME
 - wget https://downloads.sourceforge.net/project/gdcm/gdcm%202.x/GDCM%202.8.4/gdcm-2.8.4.tar.gz
 - tar xvzf gdcm-2.8.4.tar.gz
