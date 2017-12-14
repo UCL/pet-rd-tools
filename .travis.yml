@@ -3,9 +3,9 @@ addons:
   apt:
     packages:
     - cmake
-    - libgdcm2-dev
     - libboost-all-dev
     - libgoogle-glog-dev
+    - wget
     sources:
     - kalakris-cmake
 matrix:
@@ -20,8 +20,16 @@ cache:
 - directories:
   - $HOME/itk-v4.12.1-build
   - $HOME/itk-v4.12.1
+  - $HOME/gdcm-2.8.4-build
+  - $HOME/gdcm-2.8.4
 before_script:
 - export NUM_THREADS=4
+- export GDCM_SOURCE_DIR=$HOME/gdcm-2.8.4
+- wget https://downloads.sourceforge.net/project/gdcm/gdcm%202.x/GDCM%202.8.4/gdcm-2.8.4.tar.gz
+- tar xzf gdcm-2.8.4.tar.gz
+- export GDCM_BUILD_DIR=$HOME/gdcm-2.8.4-build
+- cmake ${GDCM_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release -DGDCM_BUILD_SHARED_LIBS=ON
+- make --jobs=$NUM_THREADS --keep-going && make install
 - export ITK_SOURCE_DIR=$HOME/itk-${ITK_VERSION}
 - export ITK_BUILD_DIR=${ITK_SOURCE_DIR}-build
 - if ! test -e ${ITK_SOURCE_DIR}/CMakeLists.txt; then rm -fr $ITK_SOURCE_DIR; fi
