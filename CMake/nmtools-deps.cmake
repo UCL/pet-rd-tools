@@ -1,4 +1,4 @@
-find_package(Boost 1.55.0 MODULE
+find_package(Boost 1.54.0 MODULE
   COMPONENTS
     chrono
     date_time
