@@ -26,6 +26,7 @@ before_script:
 - export NUM_THREADS=4
 - export GDCM_SOURCE_DIR=$HOME/gdcm-2.8.4
 - export GDCM_BUILD_DIR=$HOME/gdcm-2.8.4-build
+- ls -alh
 - cd $HOME
 - wget https://downloads.sourceforge.net/project/gdcm/gdcm%202.x/GDCM%202.8.4/gdcm-2.8.4.tar.gz
 - tar xvzf gdcm-2.8.4.tar.gz
@@ -44,5 +45,5 @@ before_script:
   -DGDCM_DIR=${GDCM_BUILD_DIR}
 - make --jobs=$NUM_THREADS --keep-going
 - cd $HOME/build
-- cmake ../petmr-rd-tools -DCMAKE_BUILD_TYPE=Release
+- cmake petmr-rd-tools -DCMAKE_BUILD_TYPE=Release
 script: cmake --build
