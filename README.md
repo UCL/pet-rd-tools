@@ -1,4 +1,7 @@
 # petmr-rd-tools
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d71cdf9cba3d4f9f9f973f371624bfe7)](https://www.codacy.com/app/bathomas/petmr-rd-tools?utm_source=github.com&utm_medium=referral&utm_content=UCL/petmr-rd-tools&utm_campaign=badger)
+
 Command line tools for PET-MR (pre)-processing.
 
 Tools for validating and extracting raw PET data, and associated files, for the purposes of image reconstruction via [STIR](https://github.com/UCL/STIR) and [SIRF](https://github.com/CCPPETMR/SIRF). Currently these tools are specifically for the [Siemens mMR system](https://www.healthcare.siemens.com/magnetic-resonance-imaging/mr-pet-scanner/biograph-mmr) although will likely expand in the future.
