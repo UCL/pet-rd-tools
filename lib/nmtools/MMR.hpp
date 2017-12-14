@@ -41,6 +41,7 @@ public:
 
   IMMR();
   explicit IMMR(boost::filesystem::path src);
+  IMMR(const IMMR &obj);
 
   bool SetInputFile ( boost::filesystem::path src );
   FileType GetFileType( boost::filesystem::path src );
@@ -52,14 +53,14 @@ public:
   virtual bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile)=0;
   virtual boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype) = 0;
 
-  virtual ~IMMR(){};
+  ~IMMR();
 
 protected:
 
   bool ReadHeader();
 
   FileStatusCode CheckForSiemensBFFile(boost::filesystem::path src, uint64_t numOfWords);
-  gdcm::Reader * _dicomReader;
+  gdcm::Reader * _dicomReader = nullptr;
   std::string _headerString;
 
   boost::filesystem::path _srcPath;
@@ -138,6 +139,16 @@ IMMR::IMMR(){
   _dicomReader = new gdcm::Reader;
 }
 
+//Destrutructor
+IMMR::~IMMR(){
+  delete _dicomReader;
+}
+
+//copy constructor
+IMMR::IMMR(const IMMR &obj){
+  _dicomReader = new gdcm::Reader;
+  *_dicomReader = *obj._dicomReader;
+}
 //Constructor with path.
 IMMR::IMMR(boost::filesystem::path src){
 
