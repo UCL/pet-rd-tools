@@ -1,0 +1,59 @@
+language: generic
+addons:
+  apt:
+    packages:
+    - cmake
+    - libboost-all-dev
+    - libgoogle-glog-dev
+    - wget
+    - g++-5
+    sources:
+    - ubuntu-toolchain-r-test
+matrix:
+  include:
+  #- os: osx
+    #compiler: clang
+    #env: ITK_VERSION=v4.12.1
+  - os: linux
+    compiler: gcc
+    env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5 ITK_VERSION=v4.12.1
+cache:
+- directories:
+  - $HOME/itk-v4.12.1-build
+  - $HOME/itk-v4.12.1
+  - $HOME/gdcm-2.6.9-build
+  - $HOME/gdcm-2.6.9
+before_script:
+- g++ --version
+- export NUM_THREADS=4
+- export GLOG_SOURCE_DIR=$HOME/glog
+- export GLOG_BUILD_DIR=$HOME/glog-build
+- cd $HOME
+- git clone --branch v035 https://github.com/google/glog.git
+- mkdir ${GLOG_BUILD_DIR}
+- cd ${GLOG_BUILD_DIR}
+- cmake ${GLOG_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release
+- make --jobs=$NUM_THREADS --keep-going
+- export GDCM_SOURCE_DIR=$HOME/gdcm-2.6.9
+- export GDCM_BUILD_DIR=$HOME/gdcm-2.6.9-build
+- cd $HOME
+- wget https://downloads.sourceforge.net/project/gdcm/gdcm%202.x/GDCM%202.6.9/gdcm-2.6.9.tar.gz
+- tar xvzf gdcm-2.6.9.tar.gz
+- cd ${GDCM_BUILD_DIR}
+- cmake ${GDCM_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release -DGDCM_BUILD_SHARED_LIBS=ON -DGDCM_USE_VTK=OFF
+- make --jobs=$NUM_THREADS --keep-going
+- export ITK_SOURCE_DIR=$HOME/itk-${ITK_VERSION}
+- export ITK_BUILD_DIR=${ITK_SOURCE_DIR}-build
+- if ! test -e ${ITK_SOURCE_DIR}/CMakeLists.txt; then rm -fr $ITK_SOURCE_DIR; fi
+- if ! test -e ${ITK_SOURCE_DIR}; then git clone --branch ${ITK_VERSION} git://itk.org/ITK.git
+  ${ITK_SOURCE_DIR}; fi
+- if ! test -e ${ITK_BUILD_DIR}; then mkdir ${ITK_BUILD_DIR}; fi
+- cd ${ITK_BUILD_DIR}
+- cmake ${ITK_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF
+  -DBUILD_TESTING=OFF -DITK_USE_SYSTEM_GDCM=ON -DModule_ITKReview=ON
+  -DGDCM_DIR=${GDCM_BUILD_DIR}
+- make --jobs=$NUM_THREADS --keep-going
+- cd /home/travis/build/UCL/petmr-rd-tools
+- cmake . -DCMAKE_BUILD_TYPE=Release -DITK_DIR=${ITK_BUILD_DIR}
+  -DGDCM_DIR=${GDCM_BUILD_DIR} -Dglog_DIR=${GLOG_BUILD_DIR}
+script: cmake --build .
