@@ -28,6 +28,7 @@ before_script:
 - export GLOG_BUILD_DIR=$HOME/glog-build
 - cd $HOME
 - git clone --branch v035 https://github.com/google/glog.git
+- mkdir ${GLOG_BUILD_DIR}
 - cd ${GLOG_BUILD_DIR}
 - cmake ${GLOG_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release
 - make --jobs=$NUM_THREADS --keep-going
