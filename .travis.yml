@@ -22,8 +22,6 @@ cache:
   - $HOME/itk-v4.12.1
   - $HOME/gdcm-2.8.4-build
   - $HOME/gdcm-2.8.4
-  - $HOME/glog-build
-  - $HOME/glog
 before_script:
 - export NUM_THREADS=4
 - export GLOG_SOURCE_DIR=$HOME/glog
