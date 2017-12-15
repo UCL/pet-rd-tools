@@ -52,7 +52,7 @@ before_script:
   -DBUILD_TESTING=OFF -DITK_USE_SYSTEM_GDCM=ON -DModule_ITKReview=ON
   -DGDCM_DIR=${GDCM_BUILD_DIR}
 - make --jobs=$NUM_THREADS --keep-going
-- cd /home/travis/build/UCL
-- cmake petmr-rd-tools -DCMAKE_BUILD_TYPE=Release -DITK_DIR=${ITK_BUILD_DIR}
+- cd /home/travis/build/UCL/petmr-rd-tools
+- cmake . -DCMAKE_BUILD_TYPE=Release -DITK_DIR=${ITK_BUILD_DIR}
   -DGDCM_DIR=${GDCM_BUILD_DIR} -Dglog_DIR=${GLOG_BUILD_DIR}
 script: cmake --build
