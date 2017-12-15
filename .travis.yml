@@ -11,9 +11,9 @@ addons:
     - ubuntu-toolchain-r-test
 matrix:
   include:
-  - os: osx
-    compiler: clang
-    env: ITK_VERSION=v4.12.1
+  #- os: osx
+    #compiler: clang
+    #env: ITK_VERSION=v4.12.1
   - os: linux
     compiler: gcc
     env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5 ITK_VERSION=v4.12.1
