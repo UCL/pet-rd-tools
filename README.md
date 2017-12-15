@@ -1,6 +1,6 @@
 # petmr-rd-tools
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d71cdf9cba3d4f9f9f973f371624bfe7)](https://www.codacy.com/app/bathomas/petmr-rd-tools?utm_source=github.com&utm_medium=referral&utm_content=UCL/petmr-rd-tools&utm_campaign=badger)
+[![Build Status](https://travis-ci.org/UCL/petmr-rd-tools.svg?branch=master)](https://travis-ci.org/UCL/petmr-rd-tools) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/d71cdf9cba3d4f9f9f973f371624bfe7)](https://www.codacy.com/app/bathomas/petmr-rd-tools?utm_source=github.com&utm_medium=referral&utm_content=UCL/petmr-rd-tools&utm_campaign=badger)
 
 Command line tools for PET-MR (pre)-processing.
 
