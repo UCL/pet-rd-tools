@@ -1,6 +1,4 @@
-language: cpp
-dist: trusty
-sudo: required
+language: generic
 addons:
   apt:
     packages:
@@ -9,7 +7,6 @@ addons:
     - libgoogle-glog-dev
     - wget
     sources:
-    - kalakris-cmake
     - ubuntu-toolchain-r-test
 matrix:
   include:
@@ -17,14 +14,14 @@ matrix:
     compiler: clang
     env: ITK_VERSION=v4.12.1
   - os: linux
-    compiler: gcc
-    addons:
+      env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5 ITK_VERSION=v4.12.1
+      addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
           packages:
             - g++-5
-     env: COMPILER=g++-5
+          sources: &sources
+            - llvm-toolchain-precise-3.8
+            - ubuntu-toolchain-r-test
 cache:
 - directories:
   - $HOME/itk-v4.12.1-build
