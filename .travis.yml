@@ -21,8 +21,8 @@ cache:
 - directories:
   - $HOME/itk-v4.12.1-build
   - $HOME/itk-v4.12.1
-  - $HOME/gdcm-2.8.4-build
-  - $HOME/gdcm-2.8.4
+  - $HOME/gdcm-2.6.6-build
+  - $HOME/gdcm-2.6.6
 before_script:
 - g++ --version
 - export NUM_THREADS=4
@@ -34,11 +34,11 @@ before_script:
 - cd ${GLOG_BUILD_DIR}
 - cmake ${GLOG_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release
 - make --jobs=$NUM_THREADS --keep-going
-- export GDCM_SOURCE_DIR=$HOME/gdcm-2.8.4
-- export GDCM_BUILD_DIR=$HOME/gdcm-2.8.4-build
+- export GDCM_SOURCE_DIR=$HOME/gdcm-2.6.6
+- export GDCM_BUILD_DIR=$HOME/gdcm-2.6.6-build
 - cd $HOME
-- wget https://downloads.sourceforge.net/project/gdcm/gdcm%202.x/GDCM%202.8.4/gdcm-2.8.4.tar.gz
-- tar xvzf gdcm-2.8.4.tar.gz
+- wget https://downloads.sourceforge.net/project/gdcm/gdcm%202.x/GDCM%202.6.6/gdcm-2.6.6.tar.gz
+- tar xvzf gdcm-2.6.6.tar.gz
 - cd ${GDCM_BUILD_DIR}
 - cmake ${GDCM_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release -DGDCM_BUILD_SHARED_LIBS=ON -DGDCM_USE_VTK=OFF
 - make --jobs=$NUM_THREADS --keep-going
