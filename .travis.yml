@@ -6,8 +6,11 @@ addons:
     - libboost-all-dev
     - libgoogle-glog-dev
     - wget
+    - g++5
+    - gcc-5
     sources:
     - kalakris-cmake
+    - ubuntu-toolchain-r-test
 matrix:
   include:
   - os: osx
@@ -27,6 +30,7 @@ before_script:
 - export NUM_THREADS=4
 - export GLOG_SOURCE_DIR=$HOME/glog
 - export GLOG_BUILD_DIR=$HOME/glog-build
+- if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
 - cd $HOME
 - git clone --branch v035 https://github.com/google/glog.git
 - mkdir ${GLOG_BUILD_DIR}
