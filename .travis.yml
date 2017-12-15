@@ -1,4 +1,6 @@
 language: cpp
+dist: trusty
+sudo: required
 addons:
   apt:
     packages:
@@ -15,8 +17,6 @@ matrix:
     compiler: clang
     env: ITK_VERSION=v4.12.1
   - os: linux
-    dist: trusty
-    sudo: required
     compiler: gcc
     addons:
         apt:
