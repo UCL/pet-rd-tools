@@ -22,8 +22,17 @@ cache:
   - $HOME/itk-v4.12.1
   - $HOME/gdcm-2.8.4-build
   - $HOME/gdcm-2.8.4
+  - $HOME/glog-build
+  - $HOME/glog
 before_script:
 - export NUM_THREADS=4
+- export GLOG_SOURCE_DIR=$HOME/glog
+- export GLOG_BUILD_DIR=$HOME/glog-build
+- cd $HOME
+- git clone --branch v035 https://github.com/google/glog.git
+- cd ${GLOG_BUILD_DIR}
+- cmake ${GLOG_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release
+- make --jobs=$NUM_THREADS --keep-going
 - export GDCM_SOURCE_DIR=$HOME/gdcm-2.8.4
 - export GDCM_BUILD_DIR=$HOME/gdcm-2.8.4-build
 - cd $HOME
@@ -44,5 +53,6 @@ before_script:
   -DGDCM_DIR=${GDCM_BUILD_DIR}
 - make --jobs=$NUM_THREADS --keep-going
 - cd /home/travis/build/UCL
-- cmake petmr-rd-tools -DCMAKE_BUILD_TYPE=Release
+- cmake petmr-rd-tools -DCMAKE_BUILD_TYPE=Release -DITK_DIR=${ITK_BUILD_DIR}
+  -DGDCM_DIR=${GDCM_BUILD_DIR} -Dglog_DIR=${GLOG_BUILD_DIR}
 script: cmake --build
