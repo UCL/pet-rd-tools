@@ -38,7 +38,7 @@ before_script:
 - wget https://downloads.sourceforge.net/project/gdcm/gdcm%202.x/GDCM%202.8.4/gdcm-2.8.4.tar.gz
 - tar xvzf gdcm-2.8.4.tar.gz
 - cd ${GDCM_BUILD_DIR}
-- cmake ${GDCM_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release -DGDCM_BUILD_SHARED_LIBS=ON
+- cmake ${GDCM_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release -DGDCM_BUILD_SHARED_LIBS=ON -DGDCM_USE_VTK=OFF
 - make --jobs=$NUM_THREADS --keep-going
 - export ITK_SOURCE_DIR=$HOME/itk-${ITK_VERSION}
 - export ITK_BUILD_DIR=${ITK_SOURCE_DIR}-build
