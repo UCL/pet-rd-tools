@@ -15,6 +15,7 @@ matrix:
     env: ITK_VERSION=v4.12.1
   - os: linux
     compiler: gcc
+    dist: trusty
     env: ITK_VERSION=v4.12.1
 cache:
 - directories:
