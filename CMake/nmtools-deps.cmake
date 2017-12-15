@@ -30,7 +30,6 @@ set(GDCM_LIBRARIES
   gdcmjpeg8
   gdcmMEXD
   gdcmMSFF
-  gdcmopenjpeg
   gdcmzlib
   socketxx
 )
