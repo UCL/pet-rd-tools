@@ -1,4 +1,4 @@
-language: cpp
+language: none
 addons:
   apt:
     packages:
@@ -6,8 +6,6 @@ addons:
     - libboost-all-dev
     - libgoogle-glog-dev
     - wget
-    - g++5
-    - gcc-5
     sources:
     - kalakris-cmake
     - ubuntu-toolchain-r-test
@@ -26,6 +24,7 @@ cache:
   - $HOME/gdcm-2.8.4-build
   - $HOME/gdcm-2.8.4
 before_script:
+- g++ --version
 - export NUM_THREADS=4
 - export GLOG_SOURCE_DIR=$HOME/glog
 - export GLOG_BUILD_DIR=$HOME/glog-build
