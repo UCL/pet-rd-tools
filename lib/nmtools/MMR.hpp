@@ -41,7 +41,6 @@ public:
 
   IMMR();
   explicit IMMR(boost::filesystem::path src);
-  IMMR(const IMMR &obj);
 
   bool SetInputFile ( boost::filesystem::path src );
   FileType GetFileType( boost::filesystem::path src );
@@ -53,14 +52,14 @@ public:
   virtual bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile)=0;
   virtual boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype) = 0;
 
-  ~IMMR();
+  virtual ~IMMR(){};
 
 protected:
 
   bool ReadHeader();
 
   FileStatusCode CheckForSiemensBFFile(boost::filesystem::path src, uint64_t numOfWords);
-  gdcm::Reader * _dicomReader = nullptr;
+  std::unique_ptr<gdcm::Reader> _dicomReader = nullptr;
   std::string _headerString;
 
   boost::filesystem::path _srcPath;
@@ -112,23 +111,29 @@ class IRawDataFactory {
 //Factory that returns suitable child for given data.
 
 public:
-  virtual IMMR* Create( boost::filesystem::path inFile )=0;
+  virtual std::unique_ptr<IMMR> Create( boost::filesystem::path inFile )=0;
 };
 
 class MMRFactory : public IRawDataFactory{
 public:
-  IMMR* Create( boost::filesystem::path inFile ){
+  std::unique_ptr<IMMR> Create( boost::filesystem::path inFile ){
 
     FileType fType = GetFileType( inFile );
 
-    if (fType == FileType::EMMRLIST)
-      return new MMR32BitList(inFile);
+    if (fType == FileType::EMMRLIST){
+      std::unique_ptr<IMMR>instance(new MMR32BitList(inFile));
+      return instance;
+    }
 
-    if (fType == FileType::EMMRSINO)
-      return new MMRSino(inFile); 
+    if (fType == FileType::EMMRSINO){
+      std::unique_ptr<IMMR> instance(new MMRSino(inFile)); 
+      return instance;
+    }
 
-    if (fType == FileType::EMMRNORM)
-      return new MMRNorm(inFile);      
+    if (fType == FileType::EMMRNORM){
+      std::unique_ptr<IMMR> instance(new MMRNorm(inFile));  
+      return instance;    
+    }
 
     return nullptr;
   }
@@ -136,23 +141,16 @@ public:
 
 //Constructor
 IMMR::IMMR(){
-  _dicomReader = new gdcm::Reader;
+  std::unique_ptr<gdcm::Reader> dcm(new gdcm::Reader);
+  _dicomReader = std::move(dcm);
+
 }
 
-//Destrutructor
-IMMR::~IMMR(){
-  delete _dicomReader;
-}
-
-//copy constructor
-IMMR::IMMR(const IMMR &obj){
-  _dicomReader = new gdcm::Reader;
-  *_dicomReader = *obj._dicomReader;
-}
 //Constructor with path.
 IMMR::IMMR(boost::filesystem::path src){
 
-  _dicomReader = new gdcm::Reader;
+  std::unique_ptr<gdcm::Reader> dcm(new gdcm::Reader);
+  _dicomReader = std::move(dcm);
 
   if (! this->SetInputFile(src) ) {
     LOG(ERROR) << "Unable to read mMR data in: " << src;

@@ -16,22 +16,4 @@ link_directories(${Boost_LIBRARY_DIRS})
 find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
 
-find_package(GDCM REQUIRED)
-include(${GDCM_USE_FILE})
-
-set(GDCM_LIBRARIES
-  gdcmCommon
-  gdcmDICT
-  gdcmDSED
-  gdcmexpat
-  gdcmIOD
-  gdcmjpeg12
-  gdcmjpeg16
-  gdcmjpeg8
-  gdcmMEXD
-  gdcmMSFF
-  gdcmzlib
-  socketxx
-)
-
 find_package(glog REQUIRED)

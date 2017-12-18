@@ -10,7 +10,6 @@ Tools for validating and extracting raw PET data, and associated files, for the 
 
 - CMake (>= 3.7)
 - ITK (>= 4.7)
-- GDCM (>= 2.66)
 - Boost (>= 1.55)
 - GLOG ([https://github.com/google/glog](https://github.com/google/glog))
 
