@@ -24,6 +24,14 @@ cache:
 before_script:
 - g++ --version
 - export NUM_THREADS=4
+- export GLOG_SOURCE_DIR=$HOME/glog
+- export GLOG_BUILD_DIR=$HOME/glog-build
+- cd $HOME
+- git clone --branch v035 https://github.com/google/glog.git
+- mkdir ${GLOG_BUILD_DIR}
+- cd ${GLOG_BUILD_DIR}
+- cmake ${GLOG_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release
+- make --jobs=$NUM_THREADS --keep-going
 - cd $HOME
 - export ITK_SOURCE_DIR=$HOME/itk-${ITK_VERSION}
 - export ITK_BUILD_DIR=${ITK_SOURCE_DIR}-build
@@ -36,5 +44,5 @@ before_script:
   -DBUILD_TESTING=OFF -DModule_ITKReview=ON
 - make --jobs=$NUM_THREADS --keep-going
 - cd /home/travis/build/UCL/petmr-rd-tools
-- cmake . -DCMAKE_BUILD_TYPE=Release -DITK_DIR=${ITK_BUILD_DIR}
+- cmake . -DCMAKE_BUILD_TYPE=Release -DITK_DIR=${ITK_BUILD_DIR} -Dglog_DIR=${GLOG_BUILD_DIR}
 script: cmake --build .
