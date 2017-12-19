@@ -2,7 +2,7 @@
 version: "{build}"
 
 image: Visual Studio 2013
-platform: Any CPU
+platform: x64
 configuration: release
 
 clone_folder: C:\projects\petmr-rd-tools
@@ -15,7 +15,7 @@ environment:
   GLOGBUILD: C:\projects\deps\glog-BUILD
   BOOST_ROOT: C:\Libraries\boost_1_59_0
   BOOST_INCLUDEDIR: C:\Libraries\boost_1_59_0\boost
-  BOOST_LIBRARYDIR: C:\Libraries\boost_1_59_0\libs
+  BOOST_LIBRARYDIR: C:\Libraries\boost_1_59_0\lib64-msvc-14.0
 
 install:
   - dir %BOOST_ROOT%
