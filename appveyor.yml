@@ -14,6 +14,7 @@ environment:
   GLOGINSTALL: C:\projects\deps\glog-INSTALL
   GLOGBUILD: C:\projects\deps\glog-BUILD
   BOOSTSRC: C:\projects\deps\boost_1_63_0
+  BOOSTINSTALL: C:\projects\deps\boost-INSTALL
 
 install:
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
@@ -24,7 +25,7 @@ install:
   - IF NOT EXIST %BOOSTSRC% ( 7z x boost_1_63_0.zip -oC:\projects\deps > nul &&
       cd %BOOSTSRC% &&
       bootstrap.bat --with-libraries=system,filesystem,thread,program_options,chrono,date_time,regex &&
-      b2.exe address-model=64
+      b2.exe install --prefix=%BOOSTINSTALL%
     )
   - ls %BOOSTINSTALL%
   - cd C:\projects\deps
@@ -57,7 +58,7 @@ build_script:
   - cmake
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_PREFIX_PATH="%ITKINSTALL%;%BOOSTSRC%;%GLOGINSTALL%"
-    -DBOOST_ROOT="%BOOSTSRC%"
+    -DBOOST_ROOT="%BOOSTINSTALL%"
     -DBOOST_INCLUDEDIR="%BOOSTSRC%\boost"
     -DBOOST_LIBRARYDIR="%BOOSTSRC%\stage\lib"
     -DBoost_DEBUG=ON
