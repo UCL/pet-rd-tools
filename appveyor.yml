@@ -33,8 +33,9 @@ install:
   - IF NOT EXIST %GLOGINSTALL% (
       mkdir %GLOGBUILD% &&
       cd %GLOGBUILD% &&
-      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%GLOGINSTALL%\glog ..\glog &&
+      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%GLOGINSTALL% ..\glog &&
       msbuild INSTALL.vcxproj
+      mv %GLOGINSTALL%\include %GLOGINSTALL%\glog
     )
   - dir %GLOGINSTALL%
   - dir %GLOGINSTALL%\glog
@@ -63,7 +64,6 @@ build_script:
     -DCMAKE_PREFIX_PATH="%ITKINSTALL%;%BOOSTINSTALL%;%GLOGINSTALL%"
     -DGLOG_DIR="%GLOGINSTALL%"
     -DBOOST_ROOT="%BOOSTINSTALL%"
-    -DBOOST_INCLUDEDIR="%BOOSTINSTALL%\include"
     -DBOOST_LIBRARYDIR="%BOOSTINSTALL%\lib"
     -DBoost_DEBUG=ON
     -DCMAKE_INSTALL_PATH=. .
