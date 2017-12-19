@@ -55,9 +55,7 @@ build_script:
   - cd C:\projects\petmr-rd-tools
   - cmake
     -DCMAKE_BUILD_TYPE=Release
-    -Dglog_DIR="%GLOGINSTALL%"
-    -DCMAKE_PREFIX_PATH=%ITKINSTALL%
+    -DCMAKE_PREFIX_PATH="%ITKINSTALL%;%BOOSTSRC%;%GLOGINSTALL%"
     -DBoost_DEBUG=ON
-    -DBOOST_ROOT="%BOOSTSRC%"
     -DCMAKE_INSTALL_PATH=. .
   - msbuild INSTALL.vcxproj
