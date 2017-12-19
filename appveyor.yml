@@ -25,17 +25,16 @@ install:
       cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%GLOGINSTALL% ..\glog &&
       msbuild INSTALL.vcxproj
     )
-  - set ITK_URL="https://downloads.sourceforge.net/project/itk/itk/4.12/InsightToolkit-4.12.2.zip"
-  - IF NOT EXIST C:\projects\deps\InsightToolkit-4.12.2.zip appveyor DownloadFile %ITK_URL% -FileName InsightToolkit-4.12.2.zip
-  - IF NOT EXIST %ITKINSTALL% ( 7z x InsightToolkit-4.12.2.zip -oC:\projects\deps\ITK > nul &&
+  - set ITK_URL="https://github.com/InsightSoftwareConsortium/ITK.git"
+  - git clone -b v4.12.2 %ITK_URL%
+  - IF NOT EXIST %ITKINSTALL% ( 
       mkdir %ITKBUILD% &&
       cd %ITKBUILD% &&
-      cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% -DModule_ITKReview=ON ..\ITK\InsightToolkit-4.12.2 &&
+      cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% -DModule_ITKReview=ON ..\ITK &&
       msbuild INSTALL.vcxproj
     )
 
 cache:
-  - C:\projects\deps\ITK-4.12.2.zip
   - C:\projects\deps\ITK-4.12.2 -> appveyor.yml
 
 build_script:
