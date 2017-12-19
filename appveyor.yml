@@ -42,9 +42,6 @@ cache:
   - C:\projects\deps\glog-INSTALL -> appveyor.yml
   - C:\projects\deps\ITK-4.12.2 -> appveyor.yml
 
-build:
-  parallel: true
-
 build_script:
   - cd C:\projects\petmr-rd-tools
   - cmake 
