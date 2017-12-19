@@ -35,7 +35,7 @@ install:
       cd %GLOGBUILD% &&
       cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%GLOGINSTALL% ..\glog &&
       msbuild INSTALL.vcxproj
-      mv %GLOGINSTALL%\include %GLOGINSTALL%\glog
+      ren %GLOGINSTALL%\include %GLOGINSTALL%\glog
     )
   - dir %GLOGINSTALL%
   - dir %GLOGINSTALL%\glog
