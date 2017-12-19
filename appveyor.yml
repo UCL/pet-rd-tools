@@ -1,7 +1,7 @@
 # version format
 version: "{build}"
 
-image: Visual Studio 2013
+image: Visual Studio 2015
 platform: Any CPU
 configuration: release
 
@@ -13,9 +13,9 @@ environment:
   ITKBUILD: C:\projects\deps\ITK-BUILD
   GLOGINSTALL: C:\projects\deps\glog-INSTALL
   GLOGBUILD: C:\projects\deps\glog-BUILD
-  BOOST_ROOT: C:/Libraries/boost_1_59_0
-  BOOST_LIBRARYDIR_WIN32: C:/Libraries/boost_1_59_0/lib32-msvc-14.0
-  BOOST_LIBRARYDIR_WIN64: C:/Libraries/boost_1_59_0/lib64-msvc-14.0
+  BOOST_ROOT: C:\Libraries\boost_1_59_0
+  BOOST_INCLUDEDIR: C:\Libraries\boost_1_59_0\boost
+  BOOST_LIBRARYDIR: C:\Libraries\boost_1_59_0\lib64-msvc-14.0
 
 install:
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
@@ -49,9 +49,10 @@ build_script:
   - cd C:\projects\petmr-rd-tools
   - cmake 
     -DCMAKE_BUILD_TYPE=Release 
-    -DGLOG_DIR=%GLOGINSTALL% 
-    -DCMAKE_PREFIX_PATH=%ITKINSTALL% 
+    -DGLOG_DIR="%GLOGINSTALL%" 
+    -DITK_DIR="%ITKINSTALL%" 
     -DBOOST_ROOT="%BOOST_ROOT%"
-    -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR_WIN64%"
+    -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%"
+    -DBOOST_INCLUDEDIR="%BOOST_INCLUDEDIR%"
     -DCMAKE_INSTALL_PATH=. .
   - msbuild INSTALL.vcxproj
