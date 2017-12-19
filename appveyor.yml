@@ -13,12 +13,20 @@ environment:
   ITKBUILD: C:\projects\deps\ITK-BUILD
   GLOGINSTALL: C:\projects\deps\glog-INSTALL
   GLOGBUILD: C:\projects\deps\glog-BUILD
-  BOOST_ROOT: C:\Libraries\boost_1_59_0
-  BOOST_INCLUDEDIR: C:\Libraries\boost_1_59_0\boost
-  BOOST_LIBRARYDIR: C:\Libraries\boost_1_59_0\lib64-msvc-14.0
+  BOOSTSRC: C:\projects\deps\boost-1.63.0
+  BOOSTINSTALL: C:\projects\deps\boost-INSTALL
+  BOOSTBUILD: C:\projects\deps\boost-BUILD  
 
 install:
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
+  - cd C:\projects\deps
+  - set BOOST_URL="http://downloads.sourceforge.net/project/boost/boost/1.63.0/boost_1_63_0.zip"
+  - IF NOT EXIST C:\projects\deps\boost_1_63_0.zip appveyor DownloadFile %BOOST_URL% -FileName boost_1_63_0.zip
+  - IF NOT EXIST %BOOSTINSTALL% (
+      cd %BOOSTSRC% &&
+      bootstrap.bat --prefix=%BOOSTINSTALL% --with-libraries=system,filesystem,thread,program_options,chrono,date_time,regex
+      b2.exe
+    )
   - cd C:\projects\deps
   - set GLOG_URL="https://github.com/google/glog"
   - git clone -b v035 %GLOG_URL%
@@ -41,6 +49,7 @@ install:
 cache:
   - C:\projects\deps\glog-INSTALL -> appveyor.yml
   - C:\projects\deps\ITK-4.12.2
+  - C:\projects\deps\boost-INSTALL
 
 build_script:
   - cd C:\projects\petmr-rd-tools
