@@ -22,11 +22,9 @@ install:
   - cd C:\projects\deps
   - set BOOST_URL="http://downloads.sourceforge.net/project/boost/boost/1.63.0/boost_1_63_0.zip"
   - IF NOT EXIST C:\projects\deps\boost_1_63_0.zip appveyor DownloadFile %BOOST_URL% -FileName boost_1_63_0.zip
-  - IF NOT EXIST %BOOSTSRC% ( 7z x boost_1_63_0.zip -oC:\projects\deps > nul )
-  - dir %BOOSTSRC%
-  - IF NOT EXIST %BOOSTINSTALL% (
+  - IF NOT EXIST %BOOSTSRC% ( 7z x boost_1_63_0.zip -oC:\projects\deps > nul &&
       cd %BOOSTSRC% &&
-      bootstrap.bat --prefix=%BOOSTINSTALL% --with-libraries=system,filesystem,thread,program_options,chrono,date_time,regex &&
+      bootstrap.bat --with-libraries=system,filesystem,thread,program_options,chrono,date_time,regex &&
       b2.exe address-model=64
     )
   - ls %BOOSTINSTALL%
@@ -53,16 +51,7 @@ cache:
   - C:\projects\deps\glog-INSTALL
   - C:\projects\deps\ITK-4.12.2
   - C:\projects\deps\boost_1_63_0.zip
-  - C:\projects\deps\boost-INSTALL
+  - C:\projects\deps\boost_1_63_0
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - cmake 
-    -DCMAKE_BUILD_TYPE=Release 
-    -DGLOG_DIR="%GLOGINSTALL%" 
-    -DCMAKE_PREFIX_PATH=%ITKINSTALL%
-    -DBoost_DEBUG=ON
-    -DBOOST_ROOT="%BOOSTINSTALL%"
-    -DBOOST_INCLUDEDIR="%BOOSTINSTALL%\boost\include"
-    -DCMAKE_INSTALL_PATH=. .
-  - msbuild INSTALL.vcxproj
