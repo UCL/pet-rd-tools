@@ -27,7 +27,7 @@ install:
   - IF NOT EXIST %BOOSTINSTALL% (
       cd %BOOSTSRC% &&
       bootstrap.bat --prefix=%BOOSTINSTALL% --with-libraries=system,filesystem,thread,program_options,chrono,date_time,regex &&
-      b2.exe
+      b2.exe address-model=64
     )
   - ls %BOOSTINSTALL%
   - cd C:\projects\deps
@@ -50,8 +50,9 @@ install:
     )
 
 cache:
-  - C:\projects\deps\glog-INSTALL -> appveyor.yml
+  - C:\projects\deps\glog-INSTALL
   - C:\projects\deps\ITK-4.12.2
+  - C:\projects\deps\boost_1_63_0.zip
   - C:\projects\deps\boost-INSTALL
 
 build_script:
@@ -63,8 +64,5 @@ build_script:
     -DBoost_DEBUG=ON
     -DBOOST_ROOT="%BOOSTINSTALL%"
     -DBOOST_INCLUDEDIR="%BOOSTINSTALL%\boost\include"
-    -DBoost_USE_STATIC_LIBS:BOOL=OFF
-    -DBoost_USE_MULTITHREADED:BOOL=ON
-    -DBoost_USE_STATIC_RUNTIME:BOOL=OFF
     -DCMAKE_INSTALL_PATH=. .
   - msbuild INSTALL.vcxproj
