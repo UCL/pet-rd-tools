@@ -18,9 +18,6 @@ environment:
   BOOST_LIBRARYDIR: C:\Libraries\boost_1_59_0\lib64-msvc-14.0
 
 install:
-  - dir %BOOST_ROOT%
-  - dir %BOOST_INCLUDEDIR%
-  - dir %BOOST_LIBRARYDIR%
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
   - set GLOG_URL="https://github.com/google/glog"
@@ -43,18 +40,7 @@ install:
 
 cache:
   - C:\projects\deps\glog-INSTALL -> appveyor.yml
-  - C:\projects\deps\ITK-4.12.2 -> appveyor.yml
+  - C:\projects\deps\ITK-4.12.2
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - cmake 
-    -DCMAKE_BUILD_TYPE=Release 
-    -DGLOG_DIR="%GLOGINSTALL%" 
-    -DCMAKE_PREFIX_PATH=%ITKINSTALL%
-    -DBoost_DEBUG=ON
-    -DBOOST_ROOT="%BOOST_ROOT%"
-    -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%"
-    -DBoost_INCLUDE_DIR="%BOOST_INCLUDEDIR%"
-    -DBoost_USE_STATIC_LIBS:BOOL=OFF
-    -DCMAKE_INSTALL_PATH=. .
-  - msbuild INSTALL.vcxproj
