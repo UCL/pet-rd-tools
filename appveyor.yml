@@ -13,11 +13,12 @@ environment:
   ITKBUILD: C:\projects\deps\ITK-BUILD
   GLOGINSTALL: C:\projects\deps\glog-INSTALL
   GLOGBUILD: C:\projects\deps\glog-BUILD
-  BOOST_ROOT: C:\Libraries\boost_1_64_0
-  BOOST_INCLUDEDIR: C:\Libraries\boost_1_64_0\boost
-  BOOST_LIBRARYDIR: C:\Libraries\boost_1_64_0\libs
+  BOOST_ROOT: C:\Libraries\boost_1_62_0
+  BOOST_INCLUDEDIR: C:\Libraries\boost_1_62_0\boost
+  BOOST_LIBRARYDIR: C:\Libraries\boost_1_62_0\libs
 
 install:
+  - dir %BOOST_ROOT%
   - dir %BOOST_LIBRARYDIR%
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
