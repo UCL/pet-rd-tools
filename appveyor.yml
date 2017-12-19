@@ -14,8 +14,6 @@ environment:
   GLOGINSTALL: C:\projects\deps\glog-INSTALL
   GLOGBUILD: C:\projects\deps\glog-BUILD
   BOOSTSRC: C:\projects\deps\boost_1_63_0
-  BOOSTINSTALL: C:\projects\deps\boost-INSTALL
-  BOOSTBUILD: C:\projects\deps\boost-BUILD  
 
 install:
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
