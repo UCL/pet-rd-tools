@@ -55,7 +55,7 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-- cmake 
+  - cmake 
     -DCMAKE_BUILD_TYPE=Release 
     -DGLOG_DIR="%GLOGINSTALL%" 
     -DCMAKE_PREFIX_PATH=%ITKINSTALL%
@@ -65,4 +65,4 @@ build_script:
     -DBoost_USE_MULTITHREADED:BOOL=ON
     -DBoost_USE_STATIC_RUNTIME:BOOL=OFF
     -DCMAKE_INSTALL_PATH=. .
-- msbuild INSTALL.vcxproj
+  - msbuild INSTALL.vcxproj
