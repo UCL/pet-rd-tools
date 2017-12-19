@@ -13,11 +13,12 @@ environment:
   ITKBUILD: C:\projects\deps\ITK-BUILD
   GLOGINSTALL: C:\projects\deps\glog-INSTALL
   GLOGBUILD: C:\projects\deps\glog-BUILD
-  BOOST_ROOT: C:\Libraries\boost_1_59_0
-  BOOST_INCLUDEDIR: C:\Libraries\boost_1_59_0\boost
-  BOOST_LIBRARYDIR: C:\Libraries\boost_1_59_0\lib64-msvc-12.0
+  BOOST_ROOT: C:\Libraries\boost_1_62_0
+  BOOST_INCLUDEDIR: C:\Libraries\boost_1_62_0\boost
+  BOOST_LIBRARYDIR: C:\Libraries\boost_1_62_0\lib64-msvc-12.0
 
 install:
+  - dir %BOOST_LIBRARYDIR%
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
   - set GLOG_URL="https://github.com/google/glog"
@@ -51,6 +52,7 @@ build_script:
     -DBoost_DEBUG=ON
     -DBOOST_ROOT="%BOOST_ROOT%"
     -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%"
-    -DBOOST_INCLUDEDIR="%BOOST_INCLUDEDIR%"
+    -DBoost_INCLUDE_DIR="%BOOST_INCLUDEDIR%"
+    -DBoost_USE_STATIC_LIBS:BOOL=OFF
     -DCMAKE_INSTALL_PATH=. .
   - msbuild INSTALL.vcxproj
