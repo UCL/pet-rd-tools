@@ -1,7 +1,7 @@
 # version format
 version: "{build}"
 
-image: Visual Studio 2017
+image: Visual Studio 2013
 platform: Any CPU
 configuration: release
 
@@ -15,7 +15,7 @@ environment:
   GLOGBUILD: C:\projects\deps\glog-BUILD
   BOOST_ROOT: C:\Libraries\boost_1_64_0
   BOOST_INCLUDEDIR: C:\Libraries\boost_1_64_0\boost
-  BOOST_LIBRARYDIR: C:\Libraries\boost_1_64_0\lib64-msvc-15.0
+  BOOST_LIBRARYDIR: C:\Libraries\boost_1_64_0\libs
 
 install:
   - dir %BOOST_LIBRARYDIR%
