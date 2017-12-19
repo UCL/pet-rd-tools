@@ -55,12 +55,4 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - cmake
-    -DCMAKE_BUILD_TYPE=Release
-    -DCMAKE_PREFIX_PATH="%ITKINSTALL%;%BOOSTSRC%;%GLOGINSTALL%"
-    -DBOOST_ROOT="%BOOSTINSTALL%"
-    -DBOOST_INCLUDEDIR="%BOOSTSRC%\boost"
-    -DBOOST_LIBRARYDIR="%BOOSTSRC%\stage\lib"
-    -DBoost_DEBUG=ON
-    -DCMAKE_INSTALL_PATH=. .
-  - msbuild INSTALL.vcxproj
+
