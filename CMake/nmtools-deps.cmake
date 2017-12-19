@@ -17,4 +17,4 @@ find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
 
 find_package(glog CONFIG REQUIRED)
-include_directories(${GLOG_INCLUDE_DIRS}
+include_directories(${GLOG_INCLUDE_DIRS})
