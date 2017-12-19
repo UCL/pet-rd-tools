@@ -51,7 +51,7 @@ cache:
   - C:\projects\deps\glog-INSTALL
   - C:\projects\deps\ITK-4.12.2
   - C:\projects\deps\boost_1_63_0.zip
-  - C:\projects\deps\boost_1_63_0
+  - C:\projects\deps\boost_1_63_0 -> appveyor.yml
 
 build_script:
   - cd C:\projects\petmr-rd-tools
