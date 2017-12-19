@@ -25,6 +25,7 @@ install:
       cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%GLOGINSTALL% ..\glog &&
       msbuild INSTALL.vcxproj
     )
+  - cd C:\projects\deps
   - set ITK_URL="https://github.com/InsightSoftwareConsortium/ITK.git"
   - git clone -b v4.12.2 %ITK_URL%
   - IF NOT EXIST %ITKINSTALL% ( 
