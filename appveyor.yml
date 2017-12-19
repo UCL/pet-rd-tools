@@ -51,6 +51,7 @@ cache:
   - C:\projects\deps\ITK-4.12.2
   - C:\projects\deps\boost_1_63_0.zip
   - C:\projects\deps\boost_1_63_0 -> appveyor.yml
+  - C:\projects\deps\boost-INSTALL 
 
 build_script:
   - cd C:\projects\petmr-rd-tools
