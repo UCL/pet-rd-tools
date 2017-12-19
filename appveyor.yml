@@ -1,7 +1,7 @@
 # version format
 version: "{build}"
 
-image: Visual Studio 2015
+image: Visual Studio 2017
 platform: Any CPU
 configuration: release
 
@@ -13,9 +13,9 @@ environment:
   ITKBUILD: C:\projects\deps\ITK-BUILD
   GLOGINSTALL: C:\projects\deps\glog-INSTALL
   GLOGBUILD: C:\projects\deps\glog-BUILD
-  BOOST_ROOT: C:\Libraries\boost_1_62_0
-  BOOST_INCLUDEDIR: C:\Libraries\boost_1_62_0\boost
-  BOOST_LIBRARYDIR: C:\Libraries\boost_1_62_0\lib64-msvc-14.0
+  BOOST_ROOT: C:\Libraries\boost_1_64_0
+  BOOST_INCLUDEDIR: C:\Libraries\boost_1_64_0\boost
+  BOOST_LIBRARYDIR: C:\Libraries\boost_1_64_0\lib64-msvc-15.0
 
 install:
   - dir %BOOST_LIBRARYDIR%
