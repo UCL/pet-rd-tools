@@ -29,6 +29,7 @@ install:
       bootstrap.bat --prefix=%BOOSTINSTALL% --with-libraries=system,filesystem,thread,program_options,chrono,date_time,regex &&
       b2.exe
     )
+  - ls %BOOSTINSTALL%
   - cd C:\projects\deps
   - set GLOG_URL="https://github.com/google/glog"
   - git clone -b v035 %GLOG_URL%
@@ -40,8 +41,8 @@ install:
     )
   - cd C:\projects\deps
   - set ITK_URL="https://github.com/InsightSoftwareConsortium/ITK.git"
-  - git clone -b v4.12.2 %ITK_URL%
   - IF NOT EXIST %ITKINSTALL% ( 
+      git clone -b v4.12.2 %ITK_URL% &&
       mkdir %ITKBUILD% &&
       cd %ITKBUILD% &&
       cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% -DModule_ITKReview=ON ..\ITK &&
@@ -61,6 +62,7 @@ build_script:
     -DCMAKE_PREFIX_PATH=%ITKINSTALL%
     -DBoost_DEBUG=ON
     -DBOOST_ROOT="%BOOSTINSTALL%"
+    -DBOOST_INCLUDEDIR="%BOOSTINSTALL%\boost\include"
     -DBoost_USE_STATIC_LIBS:BOOL=OFF
     -DBoost_USE_MULTITHREADED:BOOL=ON
     -DBoost_USE_STATIC_RUNTIME:BOOL=OFF
