@@ -37,7 +37,7 @@ install:
       msbuild INSTALL.vcxproj
     )
   - dir %GLOGINSTALL%
-  - xcopy /E %GLOGINSTALL%\include %GLOGINSTALL%\glog
+  - echo d | xcopy %GLOGINSTALL%\include %GLOGINSTALL%\glog /E /S
   - dir %GLOGINSTALL%\glog
   - cd C:\projects\deps
   - set ITK_URL="https://github.com/InsightSoftwareConsortium/ITK.git"
