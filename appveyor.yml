@@ -54,9 +54,11 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
+  - dir %ITKINSTALL%\lib\cmake
   - cmake 
     -DCMAKE_BUILD_TYPE=Release
-    -DBoost_USE_STATIC_LIBS:BOOL=ON
+    -DBoost_USE_STATIC_LIBS:BOOL=
+    -DCMAKE_MODULE_PATH="%ITKINSTALL%\lib\cmake"
     -DCMAKE_PREFIX_PATH:STRING="%ITKINSTALL%:%ITKBUILD%:%GLOGINSTALL%"
     -DITK_DIR:PATH="C:\projects\deps\ITK-BUILD\release"
     -Dglog_DIR:PATH="C:\projects\deps\glog-INSTALL"
