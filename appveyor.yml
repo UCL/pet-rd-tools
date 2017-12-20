@@ -17,9 +17,9 @@ environment:
   BOOSTINSTALL: C:\projects\deps\boost-INSTALL
 
 install:
-  - nuget install boost
-  - nuget install itk_static_vc141-x64-release
-  - nuget install glog
+  - nuget install boost -OutputDirectory C:\projects\petmr-rd-tools\boost
+  - nuget install itk_static_vc141-x64-release C:\projects\petmr-rd-tools\ITK
+  - nuget install glog C:\projects\petmr-rd-tools\glog
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
 
@@ -37,8 +37,8 @@ build_script:
   - dir glog.0.3.3.0
   - cmake
     -DCMAKE_BUILD_TYPE=Release
-    -DBOOST_ROOT=.\boost.1.65.1.0
-    -DITK_DIR=.\itk_static_vc141-x64-release.4.12.2
-    -DGLOG_DIR=.\glog.0.3.3.0
+    -DBOOST_ROOT=.\boost
+    -DITK_DIR=.\ITK
+    -DGLOG_DIR=.\glog
     -DCMAKE_INSTALL_PATH=. .
   - msbuild INSTALL.vcxproj
