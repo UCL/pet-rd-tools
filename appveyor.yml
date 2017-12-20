@@ -35,5 +35,8 @@ build_script:
   - dir 
   - cmake
     -DCMAKE_BUILD_TYPE=Release
+    -DBOOST_ROOT=.\boost.1.65.1.0
+    -DITK_DIR=.\itk_static_vc141-x64-release.4.12.2
+    -DGLOG_DIR=.\glog.0.3.3.0
     -DCMAKE_INSTALL_PATH=. .
   - msbuild INSTALL.vcxproj
