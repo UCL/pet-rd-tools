@@ -32,10 +32,14 @@ install:
       cd %ITKBUILD% &&
       cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% ..\ITK\InsightToolkit-4.10.1
     )
-
+  - IF NOT EXIST %ITKINSTALL% (
+    cd %ITKBUILD% &&
+    msbuild INSTALL.vcxproj
+  )
 cache:
   - C:\projects\deps\ITK\InsightToolkit-4.10.1
   - C:\projects\deps\ITK-BUILD
+  - C:\projects\deps\ITK-INSTALL
 
 build_script:
   - cd C:\projects\petmr-rd-tools
