@@ -32,7 +32,7 @@ install:
   - set BOOST_URL="https://dl.bintray.com/boostorg/release/1.63.0/binaries/boost_1_63_0-msvc-12.0-64.exe"
   - IF NOT EXIST C:\projects\deps\boost_1_63_0-msvc-12.0-64.exe appveyor DownloadFile %BOOST_URL%
   - IF NOT EXIST %BOOSTINSTALL% ( 
-      boost_1_63_0-msvc-12.0-64.exe
+      boost_1_63_0-msvc-12.0-64.exe --prefix=%BOOSTINSTALL%
     )
   - dir %BOOSTINSTALL%
 
