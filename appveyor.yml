@@ -32,9 +32,9 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - dir boost.1.65.1.0
-  - dir itk_static_vc141-x64-release.4.12.2
-  - dir glog.0.3.3.0
+  - dir boost
+  - dir ITK
+  - dir glog
   - cmake
     -DCMAKE_BUILD_TYPE=Release
     -DBOOST_ROOT=.\boost
