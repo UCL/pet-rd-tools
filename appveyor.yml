@@ -45,6 +45,8 @@ install:
       cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%GLOGINSTALL%\glog" ..\glog &&
       msbuild INSTALL.vcxproj
     )
+  - cd %BOOSTINSTALL%\bin
+  - b2.exe
 
 cache:
   - C:\projects\deps\ITK-4.12.2
@@ -53,7 +55,7 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - dir %BOOSTINSTALL%\bin
+  - dir %BOOSTINSTALL%
   - cmake
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
