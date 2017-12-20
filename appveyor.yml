@@ -17,7 +17,6 @@ environment:
   BOOSTINSTALL: C:\projects\deps\boost-INSTALL
 
 install:
-  - nuget install glog -OutputDirectory C:\projects\petmr-rd-tools\glog -Version 0.3.3
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
   - set ITK_URL="https://github.com/InsightSoftwareConsortium/ITK.git"
@@ -30,16 +29,9 @@ install:
     )
 
 cache:
-  - C:\projects\deps\glog-INSTALL -> appveyor.yml
   - C:\projects\deps\ITK-4.12.2 -> appveyor.yml
 
 build_script:
   - cd C:\projects\petmr-rd-tools
   - dir C:\Libraries\boost_1_65_1
   - dir C:\projects\petmr-rd-tools\glog\glog.0.3.3.0\build\native\include
-  - cmake
-    -DCMAKE_BUILD_TYPE=Release
-    -DBOOST_ROOT=C:\Libraries\boost_1_65_1
-    -DGLOG_DIR=C:\projects\petmr-rd-tools\glog\glog.0.3.3.0\build\native
-    -DCMAKE_INSTALL_PATH=. .
-  - msbuild INSTALL.vcxproj
