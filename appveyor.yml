@@ -18,7 +18,7 @@ environment:
 
 install:
   - set PATH=%PATH:C:\Program Files (x86)\Git\bin;=%
-  - set PATH=C:\MinGW\bin;%PATH%
+  - set PATH=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\bin;%PATH%
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
   - set ITK_URL="https://github.com/InsightSoftwareConsortium/ITK.git"
@@ -62,7 +62,7 @@ build_script:
   - cmake
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
-    -DCMAKE_PREFIX_PATH:STRING="%ITKINSTALL%;%BOOSTINSTALL%;C:/Program Files (x86)/glog/lib/cmake/glog"
+    -DCMAKE_PREFIX_PATH:STRING="%ITKINSTALL%:%BOOSTINSTALL%:C:/Program Files (x86)/glog/lib/cmake/glog"
     -Dglog_DIR="%GLOGINSTALL%/glog/lib/cmake/glog"
     -DITK_DIR="%ITKINSTALL%"
     -DBOOST_INCLUDEDIR="%BOOSTINSTALL%\include"
