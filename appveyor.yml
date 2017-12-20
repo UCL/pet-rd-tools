@@ -52,6 +52,7 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
+  - dir 
   - cmake 
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
