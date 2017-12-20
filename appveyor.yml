@@ -22,14 +22,6 @@ install:
   - nuget install glog
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
-  - set GLOG_URL="https://github.com/google/glog"
-  - git clone -b v035 %GLOG_URL%
-  - IF NOT EXIST %GLOGINSTALL% (
-      mkdir %GLOGBUILD% &&
-      cd %GLOGBUILD% &&
-      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="C:\Program Files (x86)\glog" ..\glog &&
-      msbuild INSTALL.vcxproj
-    )
 
 cache:
   - C:\projects\deps\glog-INSTALL -> appveyor.yml
