@@ -23,12 +23,26 @@ install:
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
   - set ITK_URL="https://downloads.sourceforge.net/project/itk/itk/4.10/InsightToolkit-4.10.1.zip"
-  - IF NOT EXIST %ITKSRC% (
-      appveyor DownloadFile %ITK_URL% -FileName ITK-4.10.1.zip &&
-      7z x ITK-4.10.1.zip -oC:\projects\deps\ITK > nul
-    )
-  - IF NOT EXIST %ITKINSTALL% (
-      cd %ITKBUILD% &&
+  #- IF NOT EXIST %ITKSRC% (
+  #    appveyor DownloadFile %ITK_URL% -FileName ITK-4.10.1.zip &&
+  #    7z x ITK-4.10.1.zip -oC:\projects\deps\ITK > nul
+  #  )
+  #- IF NOT EXIST %ITKBUILD% (
+  #    mkdir %ITKBUILD% &&
+  #    cd %ITKBUILD% &&
+  #    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% ..\ITK\InsightToolkit-4.10.1
+  #  )
+  #- IF NOT EXIST %ITKINSTALL% (
+  #    cd %ITKBUILD% &&
+  #    msbuild INSTALL.vcxproj
+  #  )
+  - cd C:\projects\deps
+  - set GLOG_URL="https://github.com/google/glog"
+  - git clone -b v035 %GLOG_URL%
+  - IF NOT EXIST %GLOGINSTALL% (
+      mkdir %GLOGBUILD% &&
+      cd %GLOGBUILD% &&
+      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%GLOGINSTALL%" ..\glog &&
       msbuild INSTALL.vcxproj
     )
 
@@ -36,6 +50,7 @@ cache:
   - C:\projects\deps\ITK\InsightToolkit-4.10.1
   - C:\projects\deps\ITK-BUILD
   - C:\projects\deps\ITK-INSTALL
+  - C:\projects\deps\glog-INSTALL
 
 build_script:
   - cd C:\projects\petmr-rd-tools
