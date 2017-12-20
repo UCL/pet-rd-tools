@@ -33,6 +33,9 @@ install:
   - IF NOT EXIST C:\projects\deps\boost_1_63_0.zip appveyor DownloadFile %BOOST_URL% -FileName boost_1_63_0.zip
   - IF NOT EXIST %BOOSTINSTALL% ( 7z x boost_1_63_0.zip -oC:\projects\deps > nul &&
       ls %BOOSTSRC% &&
+      ls %BOOSTSRC%\tools &&
+      ls %BOOSTSRC%\tools\build &&
+      ls %BOOSTSRC%\tools\build\v2 &&
       cd %BOOSTSRC%\tools\build\v2 &&
       bootstrap.bat --with-libraries=system,filesystem,thread,program_options,chrono,date_time,regex &&
       b2.exe install --prefix=%BOOSTINSTALL%
