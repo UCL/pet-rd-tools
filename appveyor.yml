@@ -47,7 +47,6 @@ install:
       msbuild INSTALL.vcxproj
 )
 
-
 cache:
   - C:\projects\deps\ITK-4.12.2
   - C:\projects\deps\boost-INSTALL
