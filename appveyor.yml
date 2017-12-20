@@ -2,7 +2,7 @@
 version: "{build}"
 
 image: Visual Studio 2013
-platform: x64
+platform: x86
 configuration: release
 
 clone_folder: C:\projects\petmr-rd-tools
@@ -19,6 +19,7 @@ environment:
 install:
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
+  - dir C:\Libraries\boost_1_63_0
   - set ITK_URL="https://github.com/InsightSoftwareConsortium/ITK.git"
   - IF NOT EXIST %ITKINSTALL% ( 
       git clone -b v4.12.2 %ITK_URL% &&
@@ -34,4 +35,3 @@ cache:
 build_script:
   - cd C:\projects\petmr-rd-tools
   - dir C:\Libraries\boost_1_63_0
-  - dir C:\projects\petmr-rd-tools\glog\glog.0.3.3.0\build\native\include
