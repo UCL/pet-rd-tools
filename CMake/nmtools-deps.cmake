@@ -16,5 +16,5 @@ link_directories(${Boost_LIBRARY_DIRS})
 find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
 
-find_package(glog CONFIG REQUIRED)
+find_package(glog NAMES google-glog glog REQUIRED)
 include_directories(${GLOG_INCLUDE_DIRS})
