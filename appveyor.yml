@@ -17,6 +17,8 @@ environment:
   BOOSTINSTALL: C:\projects\deps\boost-INSTALL
 
 install:
+  - set PATH=%PATH:C:\Program Files (x86)\Git\bin;=%
+  - set PATH=C:\MinGW\bin;%PATH%
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
   - set ITK_URL="https://github.com/InsightSoftwareConsortium/ITK.git"
