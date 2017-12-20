@@ -23,7 +23,7 @@ install:
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
   - set ITK_URL="https://downloads.sourceforge.net/project/itk/itk/4.10/InsightToolkit-4.10.1.zip"
-  - dir C:\projects\deps\ITK-INSTALL
+  - dir C:\projects\deps\ITK-INSTALL\bin
   #- IF NOT EXIST %ITKSRC% (
   #    appveyor DownloadFile %ITK_URL% -FileName ITK-4.10.1.zip &&
   #    7z x ITK-4.10.1.zip -oC:\projects\deps\ITK > nul
