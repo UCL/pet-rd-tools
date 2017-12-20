@@ -57,7 +57,7 @@ build_script:
   - dir %ITKINSTALL%\lib\cmake
   - cmake 
     -DCMAKE_BUILD_TYPE=Release
-    -DBoost_USE_STATIC_LIBS:BOOL=
+    -DBoost_USE_STATIC_LIBS:BOOL=ON
     -DCMAKE_MODULE_PATH="C:\projects\deps\ITK-INSTALL\lib\cmake\ITK-4.10"
     -DCMAKE_PREFIX_PATH:STRING="%ITKINSTALL%:%ITKBUILD%:%GLOGINSTALL%"
     -DITK_DIR:PATH="C:\projects\deps\ITK-BUILD\release"
