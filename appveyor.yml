@@ -19,16 +19,8 @@ environment:
 install:
   - nuget install boost
   - nuget install itk_static_vc141-x64-release
+  - nuget install glog
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
-  - cd C:\projects\deps
-  - set BOOST_URL="http://downloads.sourceforge.net/project/boost/boost/1.63.0/boost_1_63_0.zip"
-  - IF NOT EXIST C:\projects\deps\boost_1_63_0.zip appveyor DownloadFile %BOOST_URL% -FileName boost_1_63_0.zip
-  - IF NOT EXIST %BOOSTINSTALL% ( 7z x boost_1_63_0.zip -oC:\projects\deps > nul &&
-      cd %BOOSTSRC% &&
-      bootstrap.bat --with-libraries=system,filesystem,thread,program_options,chrono,date_time,regex &&
-      b2.exe install --prefix=%BOOSTINSTALL%
-    )
-  - ls %BOOSTINSTALL%
   - cd C:\projects\deps
   - set GLOG_URL="https://github.com/google/glog"
   - git clone -b v035 %GLOG_URL%
@@ -36,15 +28,6 @@ install:
       mkdir %GLOGBUILD% &&
       cd %GLOGBUILD% &&
       cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="C:\Program Files (x86)\glog" ..\glog &&
-      msbuild INSTALL.vcxproj
-    )
-  - cd C:\projects\deps
-  - set ITK_URL="https://github.com/InsightSoftwareConsortium/ITK.git"
-  - IF NOT EXIST %ITKINSTALL% ( 
-      git clone -b v4.12.2 %ITK_URL% &&
-      mkdir %ITKBUILD% &&
-      cd %ITKBUILD% &&
-      cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% -DModule_ITKReview=ON ..\ITK &&
       msbuild INSTALL.vcxproj
     )
 
@@ -59,10 +42,5 @@ build_script:
   - cd C:\projects\petmr-rd-tools
   - cmake
     -DCMAKE_BUILD_TYPE=Release
-    -DBoost_USE_STATIC_LIBS:BOOL=ON
-    -DCMAKE_PREFIX_PATH:STRING="%ITKINSTALL%;%BOOSTINSTALL%;C:/Program Files (x86)/glog/lib/cmake/glog"
-    -DBOOST_ROOT="%BOOSTINSTALL%"
-    -DBOOST_LIBRARYDIR="%BOOSTINSTALL%\lib"
-    -DBoost_DEBUG=ON
     -DCMAKE_INSTALL_PATH=. .
   - msbuild INSTALL.vcxproj
