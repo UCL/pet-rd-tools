@@ -16,6 +16,10 @@ environment:
   BOOSTSRC: C:\projects\deps\boost_1_63_0
   BOOSTINSTALL: C:\projects\deps\boost-INSTALL
 
+before_build:
+  - set PATH=%PATH:C:\Program Files (x86)\Git\bin;=%
+  - set PATH=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\bin;%PATH%
+  
 install:
   - set PATH=%PATH:C:\Program Files (x86)\Git\bin;=%
   - set PATH=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\bin;%PATH%
