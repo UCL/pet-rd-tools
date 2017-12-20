@@ -32,6 +32,7 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
+  - dir 
   - cmake
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_INSTALL_PATH=. .
