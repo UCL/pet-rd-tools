@@ -2,21 +2,21 @@ add_executable(nm_validate NMValidate.cpp  )
 target_link_libraries(nm_validate 
       ${ITK_LIBRARIES}  
       ${Boost_LIBRARIES}
-      glog 
+      glog::glog 
     )
 
 add_executable(nm_extract NMExtract.cpp  )
 target_link_libraries(nm_extract 
       ${Boost_LIBRARIES} 
       ${ITK_LIBRARIES} 
-      glog 
+      glog::glog 
     )
 
 add_executable(nm_mrac2mu NMmrac2mu.cpp  )
 target_link_libraries(nm_mrac2mu 
       ${Boost_LIBRARIES}
       ${ITK_LIBRARIES} 
-      glog 
+      glog::glog 
     )
 
 install(TARGETS nm_validate DESTINATION bin)
