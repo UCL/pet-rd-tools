@@ -24,8 +24,9 @@ install:
       git clone -b v4.12.2 %ITK_URL% &&
       mkdir %ITKBUILD% &&
       cd %ITKBUILD% &&
-      cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% -DModule_ITKReview=ON ..\ITK &&
-      msbuild INSTALL.vcxproj
+      cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% -DModule_ITKReview=ON ..\ITK &&
+      mingw32-make &&
+      mingw32-make install
     )
   - cd C:\projects\deps
   - set BOOST_URL="http://downloads.sourceforge.net/project/boost/boost/1.63.0/boost_1_63_0.zip"
@@ -33,8 +34,8 @@ install:
   - IF NOT EXIST %BOOSTINSTALL% ( 
       7z x boost_1_63_0.zip -oC:\projects\deps > nul &&
       cd %BOOSTSRC% &&
-      bootstrap.bat --with-libraries=system,filesystem,thread,program_options,chrono,date_time,regex &&
-      b2.exe --prefix=%BOOSTINSTALL% install 
+      bootstrap.bat mingw &&
+      b2.exe install --prefix="%BOOSTINSTALL%" 
     )
   - cd C:\projects\deps
   - set GLOG_URL="https://github.com/google/glog"
@@ -42,15 +43,16 @@ install:
   - IF NOT EXIST %GLOGINSTALL% (
       mkdir %GLOGBUILD% &&
       cd %GLOGBUILD% &&
-      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%GLOGINSTALL%\glog" ..\glog &&
-      msbuild INSTALL.vcxproj
+      cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%GLOGINSTALL%\glog" ..\glog &&
+      mingw32-make &&
+      mingw32-make install
     )
   - cd %BOOSTINSTALL%\bin
 
 cache:
-  - C:\projects\deps\ITK-4.12.2
+  - C:\projects\deps\ITK-4.12.2 -> appveyor.yml
   - C:\projects\deps\boost-INSTALL -> appveyor.yml
-  - C:\projects\deps\glog-INSTALL
+  - C:\projects\deps\glog-INSTALL -> appveyor.yml
 
 build_script:
   - cd C:\projects\petmr-rd-tools
