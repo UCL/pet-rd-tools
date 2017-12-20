@@ -32,13 +32,13 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - dir C:\projects\petmr-rd-tools\boost\boost.1.65.1.0\build
-  - dir C:\projects\petmr-rd-tools\ITK\itk_static_vc141-x64-release.4.12.2\build
-  - dir C:\projects\petmr-rd-tools\glog\glog.0.3.3.0\build
+  - dir C:\projects\petmr-rd-tools\boost\boost.1.65.1.0\build\native
+  - dir C:\projects\petmr-rd-tools\ITK\itk_static_vc141-x64-release.4.12.2\build\native
+  - dir C:\projects\petmr-rd-tools\glog\glog.0.3.3.0\build\native
   - cmake
     -DCMAKE_BUILD_TYPE=Release
-    -DBOOST_ROOT=C:\projects\petmr-rd-tools\boost\boost.1.65.1.0\build
-    -DITK_DIR=C:\projects\petmr-rd-tools\ITK\itk_static_vc141-x64-release.4.12.2\build
-    -DGLOG_DIR=C:\projects\petmr-rd-tools\glog\glog.0.3.3.0\build
+    -DBOOST_ROOT=C:\projects\petmr-rd-tools\boost\boost.1.65.1.0\build\native
+    -DITK_DIR=C:\projects\petmr-rd-tools\ITK\itk_static_vc141-x64-release.4.12.2\build\native
+    -DGLOG_DIR=C:\projects\petmr-rd-tools\glog\glog.0.3.3.0\build\native
     -DCMAKE_INSTALL_PATH=. .
   - msbuild INSTALL.vcxproj
