@@ -56,12 +56,11 @@ build_script:
   - cd C:\projects\petmr-rd-tools
   - cmake
     -DCMAKE_BUILD_TYPE=Release
-    -DBoost_USE_STATIC_LIBS:BOOL=ON
-    -DCMAKE_PREFIX_PATH:STRING="%ITKINSTALL%;%BOOSTINSTALL%;C:/Program Files (x86)/glog/lib/cmake/glog"
+    -DBoost_USE_STATIC_LIBS:BOOL=ON"
     -Dglog_DIR="%GLOGINSTALL%/glog/lib/cmake/glog"
     -DITK_DIR="%ITKINSTALL%"
-    -DBOOST_INCLUDEDIR="%BOOSTINSTALL%\include"
-    -DBOOST_LIBRARYDIR="%BOOSTINSTALL%\lib"
+    -DBoost_INCLUDEDIR="%BOOSTINSTALL%\include"
+    -DBoost_LIBRARYDIR="%BOOSTINSTALL%\lib"
     -DBoost_DEBUG=ON
     -DCMAKE_INSTALL_PATH=. .
   - msbuild INSTALL.vcxproj
