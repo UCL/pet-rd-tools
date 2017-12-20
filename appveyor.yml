@@ -59,6 +59,7 @@ build_script:
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
     -DCMAKE_PREFIX_PATH=%ITKINSTALL%;%BOOSTINSTALL%;
+    -DGLOG_DIR="C:/Program Files (x86)/google-glog"
     -DGLOG_INCLUDE_DIR="C:/Program Files (x86)/google-glog/include"
     -DGLOG_LIBRARY_DIR="C:/Program Files (x86)/google-glog/lib"
     -DBOOST_ROOT="%BOOSTINSTALL%"
