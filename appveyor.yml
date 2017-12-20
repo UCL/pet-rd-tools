@@ -54,7 +54,8 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - cmake
+  - dir C:\projects\deps\ITK-BUILD
+  - cmake 
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
     -DCMAKE_PREFIX_PATH:STRING="%ITKINSTALL%:%ITKBUILD%:%GLOGINSTALL%"
