@@ -12,7 +12,7 @@ clone_folder: C:\projects\petmr-rd-tools
 
 environment:
   ITKSRC: C:\projects\deps\ITK
-  ITKINSTALL: C:\projects\deps\ITK-4.12.2
+  ITKINSTALL: C:\projects\deps\ITK-INSTALL
   ITKBUILD: C:\projects\deps\ITK-BUILD
   GLOGINSTALL: C:\projects\deps\glog-INSTALL
   GLOGBUILD: C:\projects\deps\glog-BUILD
@@ -23,18 +23,20 @@ install:
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
   - set ITK_URL="https://downloads.sourceforge.net/project/itk/itk/4.10/InsightToolkit-4.10.1.zip"
-  - IF NOT EXIST C:\projects\deps\ITK-4.10.1.zip appveyor DownloadFile %ITK_URL% -FileName ITK-4.10.1.zip
-  - IF NOT EXIST %ITKINSTALL% ( 7z x ITK-4.10.1.zip -oC:\projects\deps\ITK > nul &&
+  - IF NOT EXIST %ITKSRC% (
+      appveyor DownloadFile %ITK_URL% -FileName ITK-4.10.1.zip &&
+      7z x ITK-4.10.1.zip -oC:\projects\deps\ITK > nul
+    )
+  - IF NOT EXIST %ITKBUILD% (
       mkdir %ITKBUILD% &&
       cd %ITKBUILD% &&
       cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% -DModule_ITKReview=ON ..\ITK\InsightToolkit-4.10.1 &&
-      msbuild INSTALL.vcxproj /MP
     )
 
 cache:
-  - C:\projects\deps\ITK-4.12.2 -> appveyor.yml
+  - C:\projects\deps\ITK\InsightToolkit-4.10.1
+  - C:\projects\deps\ITK-BUILD
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - dir %ITKINSTALL%
 
