@@ -52,10 +52,8 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - dir C:\projects\deps\ITK-BUILD\release
-  - dir C:\projects\deps\ITK-BUILD\Win32
-  - dir C:\projects\deps\ITK-BUILD\lib
-  - dir C:\projects\deps\ITK-BUILD\bin
+  - dir C:\projects\deps\ITK-BUILD\Win32\release
+  - dir C:\projects\deps\ITK-BUILD\bin\Release
   - cmake 
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
