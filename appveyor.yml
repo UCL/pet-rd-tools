@@ -36,15 +36,15 @@ install:
   #    cd %ITKBUILD% &&
   #    msbuild INSTALL.vcxproj
   #  )
-  - cd C:\projects\deps
-  - set GLOG_URL="https://github.com/google/glog"
-  - git clone -b v035 %GLOG_URL%
-  - IF NOT EXIST %GLOGINSTALL% (
-      mkdir %GLOGBUILD% &&
-      cd %GLOGBUILD% &&
-      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%GLOGINSTALL%" ..\glog &&
-      msbuild INSTALL.vcxproj
-    )
+  #- cd C:\projects\deps
+  #- set GLOG_URL="https://github.com/google/glog"
+  #- git clone -b v035 %GLOG_URL%
+  #- IF NOT EXIST %GLOGINSTALL% (
+  #    mkdir %GLOGBUILD% &&
+  #    cd %GLOGBUILD% &&
+  #    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%GLOGINSTALL%" ..\glog &&
+  #    msbuild INSTALL.vcxproj
+  #  )
 
 cache:
   - C:\projects\deps\ITK\InsightToolkit-4.10.1
@@ -54,4 +54,13 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
+  - cmake
+    -DCMAKE_BUILD_TYPE=Release
+    -DBoost_USE_STATIC_LIBS:BOOL=ON
+    -DCMAKE_PREFIX_PATH:STRING="%ITKINSTALL%:%BOOSTINSTALL%:%BOOSTINSTALL%"
+    -DBOOST_ROOT="%BOOSTINSTALL%"
+    -DBOOST_LIBRARYDIR="%BOOSTINSTALL%\lib"
+    -DBoost_DEBUG=ON
+    -DCMAKE_INSTALL_PATH=. .
+- msbuild INSTALL.vcxproj
 
