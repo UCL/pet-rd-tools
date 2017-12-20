@@ -56,7 +56,7 @@ build_script:
   - dir C:\projects\deps\ITK-BUILD\release
   - dir C:\projects\deps\ITK-BUILD\Win32
   - dir C:\projects\deps\ITK-BUILD\lib
-- dir C:\projects\deps\ITK-BUILD\bin
+  - dir C:\projects\deps\ITK-BUILD\bin
   - cmake 
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
