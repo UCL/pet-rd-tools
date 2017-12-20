@@ -52,11 +52,8 @@ cache:
   - C:\projects\deps\ITK-INSTALL
   - C:\projects\deps\glog-INSTALL
 
-
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - dir C:\projects\deps\ITK-BUILD
-  - dir C:\projects\deps\glog-INSTALL
   - cmake 
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
