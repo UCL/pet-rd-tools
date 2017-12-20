@@ -55,6 +55,7 @@ build_script:
   - dir %ITKBUILD%
   - dir C:\projects\deps\ITK-BUILD\Win32\release
   - dir C:\projects\deps\ITK-BUILD\bin\Release
+  - dir %GLOGBUILD%
   - cmake 
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
