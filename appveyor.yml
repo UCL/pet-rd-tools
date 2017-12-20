@@ -33,7 +33,7 @@ install:
   - IF NOT EXIST %GLOGINSTALL% (
       mkdir %GLOGBUILD% &&
       cd %GLOGBUILD% &&
-      cmake -DCMAKE_BUILD_TYPE=Release ..\glog &&
+      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%PROGRAMFILES%\glog ..\glog &&
       msbuild INSTALL.vcxproj
     )
   - cd C:\projects\deps
