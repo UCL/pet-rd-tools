@@ -52,11 +52,10 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - dir 
+  - dir C:\projects\deps\glog-BUILD
   - cmake 
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
-    -DCMAKE_PREFIX_PATH:STRING="%ITKINSTALL%:%ITKBUILD%:%GLOGINSTALL%:%GLOGBUILD%"
     -DITK_DIR:PATH="C:\projects\deps\ITK-BUILD"
     -Dglog_DIR:PATH="C:\projects\deps\glog-BUILD"
     -DBOOST_INCLUDEDIR="C:\Libraries\boost_1_63_0"
