@@ -27,16 +27,11 @@ install:
       appveyor DownloadFile %ITK_URL% -FileName ITK-4.10.1.zip &&
       7z x ITK-4.10.1.zip -oC:\projects\deps\ITK > nul
     )
-  - IF NOT EXIST %ITKBUILD% (
-      mkdir %ITKBUILD% &&
-      cd %ITKBUILD% &&
-      cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% ..\ITK\InsightToolkit-4.10.1
-    )
   - IF NOT EXIST %ITKINSTALL% (
       cd %ITKBUILD% &&
       msbuild INSTALL.vcxproj
     )
-    
+
 cache:
   - C:\projects\deps\ITK\InsightToolkit-4.10.1
   - C:\projects\deps\ITK-BUILD
