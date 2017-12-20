@@ -1,7 +1,7 @@
 # version format
 version: "{build}"
 
-image: Visual Studio 2013
+image: Visual Studio 2015
 platform: x64
 configuration: release
 
@@ -16,32 +16,25 @@ environment:
   BOOSTSRC: C:\projects\deps\boost_1_63_0
   BOOSTINSTALL: C:\projects\deps\boost-INSTALL
 
-before_build:
-  - set PATH=%PATH:C:\Program Files\Git\bin;=%
-  - set PATH=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\bin;%PATH%
-
 install:
-  - set PATH=%PATH:C:\Program Files (x86)\Git\bin;=%
-  - set PATH=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\bin;%PATH%
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
-  - set ITK_URL="https://github.com/InsightSoftwareConsortium/ITK.git"
-  - IF NOT EXIST %ITKINSTALL% ( 
-      git clone -b v4.12.2 %ITK_URL% &&
+  - set ITK_URL="https://downloads.sourceforge.net/project/itk/itk/4.10/InsightToolkit-4.10.1.zip"
+  - IF NOT EXIST C:\projects\deps\ITK-4.10.1.zip appveyor DownloadFile %ITK_URL% -FileName ITK-4.10.1.zip
+  - IF NOT EXIST %ITKINSTALL% ( 7z x ITK-4.10.1.zip -oC:\projects\deps\ITK > nul &&
       mkdir %ITKBUILD% &&
       cd %ITKBUILD% &&
-      cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% -DModule_ITKReview=ON ..\ITK &&
-      mingw32-make &&
-      mingw32-make install
-    )
+      cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% -DModule_ITKReview=ON ..\ITK\InsightToolkit-4.10.1 &&
+      msbuild INSTALL.vcxproj /MP /Gm-
+)
   - cd C:\projects\deps
   - set BOOST_URL="http://downloads.sourceforge.net/project/boost/boost/1.63.0/boost_1_63_0.zip"
   - IF NOT EXIST boost_1_63_0.zip ( appveyor DownloadFile %BOOST_URL% -FileName boost_1_63_0.zip )
   - IF NOT EXIST %BOOSTINSTALL% ( 
       7z x boost_1_63_0.zip -oC:\projects\deps > nul &&
       cd %BOOSTSRC% &&
-      bootstrap.bat mingw &&
-      b2.exe install --prefix="%BOOSTINSTALL%" 
+      bootstrap.bat --with-libraries=system,filesystem,thread,program_options,chrono,date_time,regex &&
+      b2.exe --prefix=%BOOSTINSTALL% install 
     )
   - cd C:\projects\deps
   - set GLOG_URL="https://github.com/google/glog"
@@ -49,9 +42,8 @@ install:
   - IF NOT EXIST %GLOGINSTALL% (
       mkdir %GLOGBUILD% &&
       cd %GLOGBUILD% &&
-      cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%GLOGINSTALL%\glog" ..\glog &&
-      mingw32-make &&
-      mingw32-make install
+      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%GLOGINSTALL%\glog" ..\glog &&
+      msbuild INSTALL.vcxproj
     )
   - cd %BOOSTINSTALL%\bin
 
@@ -66,7 +58,7 @@ build_script:
   - cmake
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
-    -DCMAKE_PREFIX_PATH:STRING="%ITKINSTALL%:%BOOSTINSTALL%:C:/Program Files (x86)/glog/lib/cmake/glog"
+    -DCMAKE_PREFIX_PATH:STRING="%ITKINSTALL%;%BOOSTINSTALL%;C:/Program Files (x86)/glog/lib/cmake/glog"
     -Dglog_DIR="%GLOGINSTALL%/glog/lib/cmake/glog"
     -DITK_DIR="%ITKINSTALL%"
     -DBOOST_INCLUDEDIR="%BOOSTINSTALL%\include"
