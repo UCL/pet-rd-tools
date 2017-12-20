@@ -19,7 +19,6 @@ environment:
 install:
   - IF NOT EXIST C:\projects\deps mkdir C:\projects\deps
   - cd C:\projects\deps
-  - dir C:\Libraries\boost_1_63_0
   - set ITK_URL="https://github.com/InsightSoftwareConsortium/ITK.git"
   - IF NOT EXIST %ITKINSTALL% ( 
       git clone -b v4.12.2 %ITK_URL% &&
@@ -54,7 +53,7 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - dir %BOOSTINSTALL%
+  - dir %BOOSTINSTALL%\bin
   - cmake
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
