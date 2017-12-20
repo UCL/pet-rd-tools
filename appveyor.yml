@@ -29,10 +29,10 @@ install:
       msbuild INSTALL.vcxproj
     )
   - cd C:\projects\deps
-  - set BOOST_URL="https://dl.bintray.com/boostorg/release/1.63.0/binaries/boost_1_63_0-msvc-12.0-64.exe"
-  - IF NOT EXIST C:\projects\deps\boost_1_63_0-msvc-12.0-64.exe appveyor DownloadFile %BOOST_URL%
+  - set BOOST_URL="https://downloads.sourceforge.net/project/boost/boost-binaries/1.66.0/boost_1_66_0-msvc-12.0-64.exe"
+  - IF NOT EXIST C:\projects\deps\boost_1_66_0-msvc-12.0-64.exe appveyor DownloadFile %BOOST_URL%
   - IF NOT EXIST %BOOSTINSTALL% ( 
-      boost_1_63_0-msvc-12.0-64.exe --prefix=%BOOSTINSTALL%
+      boost_1_66_0-msvc-12.0-64.exe --prefix=%BOOSTINSTALL%
     )
   - dir %BOOSTINSTALL%
 
