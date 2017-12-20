@@ -58,9 +58,10 @@ build_script:
     -DCMAKE_BUILD_TYPE=Release
     -DBoost_USE_STATIC_LIBS:BOOL=ON
     -DCMAKE_PREFIX_PATH:STRING="%ITKINSTALL%;%BOOSTINSTALL%;C:/Program Files (x86)/glog/lib/cmake/glog"
+    -Dglog_DIR="%GLOGINSTALL%/glog/lib/cmake/glog"
+    -DITK_DIR="%ITKINSTALL%"
     -DBOOST_ROOT="%BOOSTINSTALL%"
     -DBOOST_LIBRARYDIR="%BOOSTINSTALL%\lib"
     -DBoost_DEBUG=ON
     -DCMAKE_INSTALL_PATH=. .
   - msbuild INSTALL.vcxproj
-  
