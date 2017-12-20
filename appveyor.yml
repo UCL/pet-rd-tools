@@ -1,7 +1,7 @@
 # version format
 version: "{build}"
 
-image: Visual Studio 2017
+image: Visual Studio 2013
 platform: x64
 configuration: release
 
@@ -24,7 +24,7 @@ install:
       git clone -b v4.12.2 %ITK_URL% &&
       mkdir %ITKBUILD% &&
       cd %ITKBUILD% &&
-      cmake -G"Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% -DModule_ITKReview=ON ..\ITK &&
+      cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% -DModule_ITKReview=ON ..\ITK &&
       msbuild INSTALL.vcxproj
     )
 
@@ -33,5 +33,5 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - dir C:\Libraries\boost_1_65_1
+  - dir C:\Libraries\boost_1_63_0
   - dir C:\projects\petmr-rd-tools\glog\glog.0.3.3.0\build\native\include
