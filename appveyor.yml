@@ -43,14 +43,14 @@ install:
   - IF NOT EXIST %GLOGINSTALL% (
       mkdir %GLOGBUILD% &&
       cd %GLOGBUILD% &&
-      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="C:\Program Files (x86)\glog" ..\glog &&
+      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%GLOGINSTALL%\glog" ..\glog &&
       msbuild INSTALL.vcxproj
     )
 
 cache:
   - C:\projects\deps\ITK-4.12.2
   - C:\projects\deps\boost-INSTALL
-  - "C:\Program Files (x86)\glog"
+  - C:\projects\deps\glog-INSTALL
 
 build_script:
   - cd C:\projects\petmr-rd-tools
