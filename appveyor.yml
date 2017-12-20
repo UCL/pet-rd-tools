@@ -30,16 +30,28 @@ install:
     )
   - cd C:\projects\deps
   - set BOOST_URL="http://downloads.sourceforge.net/project/boost/boost/1.63.0/boost_1_63_0.zip"
-  - IF NOT EXIST C:\projects\deps\boost_1_63_0.zip appveyor DownloadFile %BOOST_URL% -FileName boost_1_63_0.zip
-  - IF NOT EXIST %BOOSTINSTALL% ( 7z x boost_1_63_0.zip -oC:\projects\deps > nul &&
+  - IF NOT EXIST %BOOSTINSTALL% ( 
+      appveyor DownloadFile %BOOST_URL% -FileName boost_1_63_0.zip
+      7z x boost_1_63_0.zip -oC:\projects\deps > nul &&
       cd %BOOSTSRC%\tools\build &&
       bootstrap.bat --with-libraries=system,filesystem,thread,program_options,chrono,date_time,regex &&
       b2.exe install --prefix=%BOOSTINSTALL%
     )
+  - cd C:\projects\deps
+  - set GLOG_URL="https://github.com/google/glog"
+  - git clone -b v035 %GLOG_URL%
+  - IF NOT EXIST %GLOGINSTALL% (
+      mkdir %GLOGBUILD% &&
+      cd %GLOGBUILD% &&
+      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%GLOGINSTALL%\glog" ..\glog &&
+      msbuild INSTALL.vcxproj
+)
+
 
 cache:
   - C:\projects\deps\ITK-4.12.2
   - C:\projects\deps\boost-INSTALL
+  - C:\projects\deps\glog-INSTALL
 
 build_script:
   - cd C:\projects\petmr-rd-tools
