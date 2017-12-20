@@ -52,6 +52,7 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
+  - dir %ITKBUILD%/release
   - cmake 
     --debug-output
     -DCMAKE_BUILD_TYPE=Release
