@@ -52,7 +52,6 @@ cache:
 
 build_script:
   - cd C:\projects\petmr-rd-tools
-  - dir %ITKBUILD%
   - dir C:\projects\deps\ITK-BUILD\release
   - dir C:\projects\deps\ITK-BUILD\Win32
   - dir C:\projects\deps\ITK-BUILD\lib
