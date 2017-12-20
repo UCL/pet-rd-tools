@@ -24,7 +24,7 @@ install:
       git clone -b v4.12.2 %ITK_URL% &&
       mkdir %ITKBUILD% &&
       cd %ITKBUILD% &&
-      cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DModule_ITKReview=ON ..\ITK &&
+      cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=%ITKINSTALL% -DModule_ITKReview=ON ..\ITK &&
       msbuild INSTALL.vcxproj
     )
 
