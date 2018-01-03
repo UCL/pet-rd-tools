@@ -58,3 +58,20 @@ where `<DICOM file>` is the input file for extraction, `<OUTPUTDIR>` is the targ
 - List mode files will be extracted with `.l` extensions for the list mode data and `.l.hdr` for the associated Interfile header.
 - Sinograms files will have the extension `.s` for the sinogram data and `.s.hdr` for the associated Interfile header.
 - Normalisation files will be extracted with `.n` and `.n.hdr` extensions.
+
+### `nm_mrac2mu`
+
+`nm_mrac2mu` extracts the patient mu-map from the DICOM data, scales to linear attenuation coefficients (LACs) and reslices into a full-size matrix (344 x 344 x 127) for PET reconstruction. The mu-map is oriented in LPS. 
+
+#### Usage: 
+
+```bash
+nm_mrac2mu -i <DICOMDIR> -o <OUTPUT file>
+```
+
+where `<DICOMDIR>` is the path to the MRAC DICOM folder and `<OUTPUT file>` is the destination file.
+
+#### Output extensions
+
+- The output file type is determined by the extension of the destination file. To produce a compressed NiFTi file, specify the extension `.nii.gz` e.g. `myoutput.nii.gz`. 
+- If the extension `.hv` is given, an Interfile header is generated in addition to the volume.
