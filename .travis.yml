@@ -1,4 +1,4 @@
-language: generic
+language: cpp
 addons:
   apt:
     packages:
@@ -6,6 +6,7 @@ addons:
     - libboost-all-dev
     - libgoogle-glog-dev
     - wget
+    - g++-5
     sources:
     - ubuntu-toolchain-r-test
 matrix:
@@ -15,6 +16,7 @@ matrix:
     #env: ITK_VERSION=v4.12.1
   - os: linux
     compiler: gcc
+    dist: trusty
     env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5 ITK_VERSION=v4.12.1
 cache:
 - directories:
