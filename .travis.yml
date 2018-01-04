@@ -1,4 +1,4 @@
-language: cpp
+language: generic
 addons:
   apt:
     packages:
@@ -8,6 +8,7 @@ addons:
     - wget
     - g++-5
     sources:
+    - llvm-toolchain-precise-3.8
     - ubuntu-toolchain-r-test
 matrix:
   include:
@@ -16,7 +17,6 @@ matrix:
     #env: ITK_VERSION=v4.12.1
   - os: linux
     compiler: gcc
-    dist: trusty
     env: COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5 ITK_VERSION=v4.12.1
 cache:
 - directories:
