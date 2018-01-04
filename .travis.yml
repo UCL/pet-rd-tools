@@ -6,7 +6,6 @@ addons:
     - libboost-all-dev
     - libgoogle-glog-dev
     - wget
-    - g++-5
     sources:
     - ubuntu-toolchain-r-test
 matrix:
