@@ -674,13 +674,13 @@ bool MRAC2MU::WriteToInterFile(boost::filesystem::path dst){
   }
 
   //Put new data file in header.
-  boost::filesystem::path dataFile =  boost::filesystem::change_extension(dst, ".raw");
-  this->UpdateInterfile("DATAFILE", dataFile.string());
+  boost::filesystem::path dataFile =  dst.replace_extension(".raw");
+  this->UpdateInterfile("DATAFILE", dataFile.filename().string());
 
   std::string outputHeader = GetInterfileHdr();
 
   altPath = boost::filesystem::change_extension(dst, ".hv");
-  
+
   std::ofstream infoStream;
 
   if ( infoStream ) {
