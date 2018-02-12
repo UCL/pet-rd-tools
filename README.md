@@ -66,10 +66,10 @@ where `<DICOM file>` is the input file for extraction, `<OUTPUTDIR>` is the targ
 #### Usage: 
 
 ```bash
-nm_mrac2mu -i <DICOMDIR> -o <OUTPUT file>
+nm_mrac2mu -i <DICOMDIR> -o <OUTPUT file> [--orient <ORIENTATION> --head]
 ```
 
-where `<DICOMDIR>` is the path to the MRAC DICOM folder and `<OUTPUT file>` is the destination file.
+where `<DICOMDIR>` is the path to the MRAC DICOM folder and `<OUTPUT file>` is the destination file. `<ORIENTATION>` is the desired coordinate orientation (default 'RAS'). The switch `--head` will generate a mu-map in 344x344x127 matrix and is currently hard-coded for the mMR brain MRAC.
 
 #### Output extensions
 

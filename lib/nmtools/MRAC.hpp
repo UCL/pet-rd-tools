@@ -91,6 +91,8 @@ public:
   //Set output orientation
   bool SetDesiredCoordinateOrientation(const std::string orient);
 
+  void SetIsHead(bool bStatus){ _isHead = bStatus; };
+
   //Trigger exexcution
   bool Update();
 
@@ -109,7 +111,8 @@ protected:
   bool Read();
 
   //Do reslicing etc.
-  bool ScaleAndReslice();
+  bool Scale();
+  bool ScaleAndResliceHead();
 
   //Write interfile case.
   bool WriteToInterFile(boost::filesystem::path dst);
@@ -141,7 +144,10 @@ protected:
 
   //Default image orientation is RAI
   itk::SpatialOrientation::ValidCoordinateOrientationFlags _outputOrientation 
-    = itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LPS;
+    = itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI;
+
+  //Reslice and crop into 344x344 matrix for brain. Off by default.
+  bool _isHead = false;
 
 };
 
@@ -211,7 +217,10 @@ void MRAC2MU::SetParams(nlohmann::json params){
 
 //Run pipeline
 bool MRAC2MU::Update(){
-  return ScaleAndReslice();
+  if (_isHead)
+    return ScaleAndResliceHead();
+
+  return Scale();
 }
 
 //Get final image.
@@ -562,9 +571,80 @@ bool MRAC2MU::SetDesiredCoordinateOrientation(const std::string orient){
   return true;
 
 };
+
 //Divide by 10000 to get mu-values (cm-1).
 //Interpolate and reslice according to JSON params.
-bool MRAC2MU::ScaleAndReslice(){
+bool MRAC2MU::Scale(){
+
+  typedef typename itk::DivideImageFilter<MuMapImageType, MuMapImageType, MuMapImageType> DivideFilterType;
+
+  //Scale to mu-values
+  DivideFilterType::Pointer divide = DivideFilterType::New();
+  divide->SetInput( _inputImage );
+  divide->SetConstant( 10000.0 );
+
+  try {
+    divide->Update();
+  } catch (itk::ExceptionObject &ex){
+    //std::cout << ex << std::endl;
+    LOG(ERROR) << "Unable to scale!";
+    return false;
+  }
+
+  try {
+    //Duplicate contents or reader into _muImage.
+    typedef typename itk::ImageDuplicator<MuMapImageType> DuplicatorType;
+    typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+    duplicator->SetInputImage(divide->GetOutput());
+    duplicator->Update();
+    _muImage = duplicator->GetOutput();
+  } catch (itk::ExceptionObject &ex){
+    //std::cout << ex << std::endl;
+    LOG(ERROR) << "Unable to scale to mu!";
+    return false;
+  }
+
+  //Get max and min voxel values to insert into Interfile header.
+  typedef typename itk::MinimumMaximumImageCalculator <MuMapImageType> ImageCalculatorFilterType;
+  typename ImageCalculatorFilterType::Pointer minmax = ImageCalculatorFilterType::New();
+  minmax->SetImage(_muImage);
+
+  try {
+    minmax->Compute();
+  } catch (itk::ExceptionObject &ex){
+    //std::cout << ex << std::endl;
+    LOG(ERROR) << "Unable to calculate min/max!";
+    return false;
+  }
+
+  //Update the Interfile header with new sizes etc.
+  const MuMapImageType::SizeType& size = _muImage->GetLargestPossibleRegion().GetSize();
+  this->UpdateInterfile("NX", int(size[0]));
+  this->UpdateInterfile("NY", int(size[1]));
+  this->UpdateInterfile("NZ", int(size[2]));
+
+  const MuMapImageType::SpacingType& voxSize = _muImage->GetSpacing();
+  this->UpdateInterfile("SX", float(voxSize[0]));
+  this->UpdateInterfile("SY", float(voxSize[1]));
+  this->UpdateInterfile("SZ", float(voxSize[2]));  
+
+  this->UpdateInterfile("MAXVAL", float(minmax->GetMaximum()));
+  this->UpdateInterfile("MINVAL", float(minmax->GetMinimum()));
+
+  std::string studyDate;
+  if (GetStudyDate(studyDate))
+    this->UpdateInterfile("STUDYDATE", studyDate);
+
+  std::string studyTime;
+  if (GetStudyTime(studyTime))
+    this->UpdateInterfile("STUDYTIME", studyTime);
+
+  return true;
+}
+
+//Divide by 10000 to get mu-values (cm-1).
+//Interpolate and reslice according to JSON params.
+bool MRAC2MU::ScaleAndResliceHead(){
 
   typedef typename itk::DivideImageFilter<MuMapImageType, MuMapImageType, MuMapImageType> DivideFilterType;
 

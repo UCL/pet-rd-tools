@@ -49,7 +49,8 @@ int main(int argc, char **argv)
     //("verbose,v", "Be verbose")
     ("input,i", po::value<std::string>(&inputDirPath)->required(), "Input directory")
     ("output,o", po::value<std::string>(&outputFilePath)->required(), "Output file")
-    ("orient", po::value<std::string>(&coordOrientation), "Output orientation: RAI, RAS or LPS")
+    ("orient", po::value<std::string>(&coordOrientation), "Output orientation: e.g. RAI or LPS (default = RAI)")
+    ("head", "Output mu-map for mMR brain")
     ("log,l", "Write log file");
 
   //Evaluate command line options
@@ -126,12 +127,14 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  //mrac->SetDesiredCoordinateOrientation(coordOrientation);
+  if (vm.count("head")){
+    mrac->SetIsHead(true);
+  }
  
   if (mrac->Update()){
-    LOG(INFO) << "Scaling and reslicing complete";
+    LOG(INFO) << "Scaling complete";
   } else {
-    LOG(ERROR) << "Failed to scale and reslice";
+    LOG(ERROR) << "Failed to scale image";
     return EXIT_FAILURE;
   }
 
