@@ -89,7 +89,7 @@ public:
   void SetParams(nlohmann::json params);
 
   //Set output orientation
-  bool SetDesiredCoordinateOrientation(const std::string orient);
+  bool SetDesiredCoordinateOrientation(const std::string &target);
 
   void SetIsHead(bool bStatus){ _isHead = bStatus; };
 
@@ -306,7 +306,7 @@ bool MRAC2MU::Read(){
     //Execute pipeline
     dicomReader->Update();
 
-    //Orient to LPS
+    //Re-orient
     typedef typename itk::OrientImageFilter<MuMapImageType,MuMapImageType> OrienterType;
     typename OrienterType::Pointer orienter = OrienterType::New();
   
@@ -530,10 +530,11 @@ itk::SpatialOrientation::CoordinateTerms GetOrientationCode(char &c){
 
 };
 
-bool MRAC2MU::SetDesiredCoordinateOrientation(std::string orient){ 
+bool MRAC2MU::SetDesiredCoordinateOrientation(const std::string &target){ 
 
   std::vector<int> coordVals(3);
 
+  std::string orient = target;
   //Check we have three letter code.
   if (orient.size() != 3){
     LOG(ERROR) << "Expected three letter orientation code. Read: " << orient;
