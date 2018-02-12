@@ -79,14 +79,17 @@ public:
   //Either just empty constructor, with input directory or
   //with input directory and user-specified json params.
   MRAC2MU(){};
-  explicit MRAC2MU(boost::filesystem::path src);
-  MRAC2MU(boost::filesystem::path src, nlohmann::json params);
+  explicit MRAC2MU(boost::filesystem::path src, std::string orientationCode);
+  MRAC2MU(boost::filesystem::path src, nlohmann::json params, std::string orientationCode);
 
   //Set input file and attempt to read.
   bool SetInput(boost::filesystem::path src);
 
   //Accept alternative reslicing parameters.
   void SetParams(nlohmann::json params);
+
+  //Set output orientation
+  bool SetDesiredCoordinateOrientation(const std::string orient);
 
   //Trigger exexcution
   bool Update();
@@ -136,13 +139,23 @@ protected:
   //JSON params for reslicing.
   nlohmann::json _params = resliceDefaultParams;
 
+  //Default image orientation is RAI
+  itk::SpatialOrientation::ValidCoordinateOrientationFlags _outputOrientation 
+    = itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LPS;
+
 };
 
 //Construct object from source directory.
-MRAC2MU::MRAC2MU(boost::filesystem::path src){
+MRAC2MU::MRAC2MU(boost::filesystem::path src, std::string orientationCode = "RAI"){
 
-  if (!SetInput(src))
+  if (!SetDesiredCoordinateOrientation(orientationCode)){
+    throw false;
+  }
+
+  if (!SetInput(src)) {
     LOG(ERROR) << "Input path not set!";
+    throw false;
+  }
 
   DLOG(INFO) << "SRC = " << _srcPath;
 
@@ -150,10 +163,16 @@ MRAC2MU::MRAC2MU(boost::filesystem::path src){
 
 //Construct object from source directory and use user-specified
 //params.
-MRAC2MU::MRAC2MU(boost::filesystem::path src, nlohmann::json params){
+MRAC2MU::MRAC2MU(boost::filesystem::path src, nlohmann::json params, std::string orientationCode = "RAI"){
 
-  if (!SetInput(src))
+  if (!SetDesiredCoordinateOrientation(orientationCode)){
+    throw false;
+  }
+
+  if (!SetInput(src)) {
     LOG(ERROR) << "Input path not set!";
+    throw false;
+  }
 
   _params = params;
   DLOG(INFO) << "JSON = " << std::setw(4) << _params;
@@ -283,7 +302,7 @@ bool MRAC2MU::Read(){
     typename OrienterType::Pointer orienter = OrienterType::New();
   
     orienter->UseImageDirectionOn();
-    orienter->SetDesiredCoordinateOrientation(itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LPS);
+    orienter->SetDesiredCoordinateOrientation(_outputOrientation);
     orienter->SetInput(dicomReader->GetOutput());
     orienter->Update();
 
@@ -469,6 +488,80 @@ bool MRAC2MU::GetStudyTime(std::string &studyTime){
   return true;
 }
 
+itk::SpatialOrientation::CoordinateTerms GetOrientationCode(char c){
+
+  c = toupper(c);
+
+  const std::string validVals = "RLPAIS";
+
+  if (validVals.find(c) == std::string::npos){
+    LOG(ERROR) << c << " is not a valid orientation code value!";
+    return itk::SpatialOrientation::ITK_COORDINATE_UNKNOWN;
+  }
+
+  if (c == 'R')
+    return itk::SpatialOrientation::ITK_COORDINATE_Right;
+
+  if (c == 'L')
+    return itk::SpatialOrientation::ITK_COORDINATE_Left;  
+
+  if (c == 'P')
+    return itk::SpatialOrientation::ITK_COORDINATE_Posterior;  
+
+  if (c == 'A')
+    return itk::SpatialOrientation::ITK_COORDINATE_Anterior;  
+
+  if (c == 'I')
+    return itk::SpatialOrientation::ITK_COORDINATE_Inferior; 
+
+  if (c == 'S')
+    return itk::SpatialOrientation::ITK_COORDINATE_Superior; 
+
+  return itk::SpatialOrientation::ITK_COORDINATE_UNKNOWN;
+
+};
+
+bool MRAC2MU::SetDesiredCoordinateOrientation(const std::string orient){ 
+
+  std::vector<int> coordVals(3);
+
+  //Check we have three letter code.
+  if (orient.size() != 3){
+    LOG(ERROR) << "Expected three letter orientation code. Read: " << orient;
+    return false;
+  }
+
+  //Check they are all valid identifiers
+  for (int i = 0; i < 3; i++) {
+    coordVals[i] = GetOrientationCode(orient[i]);
+    if (coordVals[i] == 0){
+      LOG(ERROR) << "Unknown coordinate: " << orient[i];
+      return false;
+    }
+  }
+
+  //See itkSpatialOrientation.h
+  itk::SpatialOrientation::ValidCoordinateOrientationFlags o = (itk::SpatialOrientation::ValidCoordinateOrientationFlags)(
+    ( coordVals[0] << itk::SpatialOrientation::ITK_COORDINATE_PrimaryMinor ) + 
+    ( coordVals[1] << itk::SpatialOrientation::ITK_COORDINATE_SecondaryMinor ) +
+    ( coordVals[2] << itk::SpatialOrientation::ITK_COORDINATE_TertiaryMinor ));
+
+  //Check we don't have an duplicates.
+  std::sort(coordVals.begin(), coordVals.end());
+  auto last = std::unique(coordVals.begin(), coordVals.end());
+  coordVals.erase(last, coordVals.end());
+
+  if (coordVals.size() != 3){
+    LOG(ERROR) << "Duplicate coordinate codes found: " << orient;
+    return false;
+  }
+
+  LOG(INFO) << "Using orientation code: " << orient;
+  _outputOrientation = o; 
+
+  return true;
+
+};
 //Divide by 10000 to get mu-values (cm-1).
 //Interpolate and reslice according to JSON params.
 bool MRAC2MU::ScaleAndReslice(){

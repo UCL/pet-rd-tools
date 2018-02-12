@@ -23,6 +23,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <glog/logging.h>
+#include <memory>
 
 #include "nmtools/MRAC.hpp"
 #include "EnvironmentInfo.h"
@@ -34,6 +35,7 @@ int main(int argc, char **argv)
 
   std::string inputDirPath;
   std::string outputFilePath = "";
+  std::string coordOrientation = "RAI";
 
   //Set-up command line options
   namespace po = boost::program_options;
@@ -47,6 +49,7 @@ int main(int argc, char **argv)
     //("verbose,v", "Be verbose")
     ("input,i", po::value<std::string>(&inputDirPath)->required(), "Input directory")
     ("output,o", po::value<std::string>(&outputFilePath)->required(), "Output file")
+    ("orient", po::value<std::string>(&coordOrientation), "Output orientation: RAI, RAS or LPS")
     ("log,l", "Write log file");
 
   //Evaluate command line options
@@ -114,7 +117,16 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  std::unique_ptr<nm::MRAC2MU> mrac(new nm::MRAC2MU(srcPath));
+  std::unique_ptr<nm::MRAC2MU> mrac;
+
+  try {
+    mrac.reset(new nm::MRAC2MU(srcPath, coordOrientation));
+  } catch (bool){
+    LOG(ERROR) << "Failed to create MRAC converter!";
+    return EXIT_FAILURE;
+  }
+
+  //mrac->SetDesiredCoordinateOrientation(coordOrientation);
  
   if (mrac->Update()){
     LOG(INFO) << "Scaling and reslicing complete";
@@ -129,28 +141,6 @@ int main(int argc, char **argv)
     LOG(ERROR) << "Failed to write output file!";
     return EXIT_FAILURE;
   }
-
-  /*
-  //Create output directory.
-  fs::path outDstDir = outputDirectory;
-
-  if (! vm.count("output")) {
-    outDstDir = srcPath.parent_path();
-    LOG(INFO) << "No output directory specified. Placing output in same directory as input.";
-  }
-
-  if (!fs::exists(outDstDir)) {
-    LOG(INFO) << "Output path " << outDstDir << " does not exist!";
-
-    try {
-      LOG(INFO) << "Creating output path " << outDstDir;
-      fs::create_directories( outDstDir );
-    }
-    catch(fs::filesystem_error const &e ){
-      LOG(INFO) << "Unable to create output directory!";
-      return EXIT_FAILURE;
-    }
-  }*/
 
   //Print total execution time
   std::time_t stopTime = std::time( 0 ) ;
