@@ -79,14 +79,19 @@ public:
   //Either just empty constructor, with input directory or
   //with input directory and user-specified json params.
   MRAC2MU(){};
-  explicit MRAC2MU(boost::filesystem::path src);
-  MRAC2MU(boost::filesystem::path src, nlohmann::json params);
+  explicit MRAC2MU(boost::filesystem::path src, std::string orientationCode);
+  MRAC2MU(boost::filesystem::path src, nlohmann::json params, std::string orientationCode);
 
   //Set input file and attempt to read.
   bool SetInput(boost::filesystem::path src);
 
   //Accept alternative reslicing parameters.
   void SetParams(nlohmann::json params);
+
+  //Set output orientation
+  bool SetDesiredCoordinateOrientation(const std::string &target);
+
+  void SetIsHead(bool bStatus){ _isHead = bStatus; };
 
   //Trigger exexcution
   bool Update();
@@ -106,7 +111,8 @@ protected:
   bool Read();
 
   //Do reslicing etc.
-  bool ScaleAndReslice();
+  bool Scale();
+  bool ScaleAndResliceHead();
 
   //Write interfile case.
   bool WriteToInterFile(boost::filesystem::path dst);
@@ -136,13 +142,26 @@ protected:
   //JSON params for reslicing.
   nlohmann::json _params = resliceDefaultParams;
 
+  //Default image orientation is RAI
+  itk::SpatialOrientation::ValidCoordinateOrientationFlags _outputOrientation 
+    = itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI;
+
+  //Reslice and crop into 344x344 matrix for brain. Off by default.
+  bool _isHead = false;
+
 };
 
 //Construct object from source directory.
-MRAC2MU::MRAC2MU(boost::filesystem::path src){
+MRAC2MU::MRAC2MU(boost::filesystem::path src, std::string orientationCode = "RAI"){
 
-  if (!SetInput(src))
+  if (!SetDesiredCoordinateOrientation(orientationCode)){
+    throw false;
+  }
+
+  if (!SetInput(src)) {
     LOG(ERROR) << "Input path not set!";
+    throw false;
+  }
 
   DLOG(INFO) << "SRC = " << _srcPath;
 
@@ -150,10 +169,16 @@ MRAC2MU::MRAC2MU(boost::filesystem::path src){
 
 //Construct object from source directory and use user-specified
 //params.
-MRAC2MU::MRAC2MU(boost::filesystem::path src, nlohmann::json params){
+MRAC2MU::MRAC2MU(boost::filesystem::path src, nlohmann::json params, std::string orientationCode = "RAI"){
 
-  if (!SetInput(src))
+  if (!SetDesiredCoordinateOrientation(orientationCode)){
+    throw false;
+  }
+
+  if (!SetInput(src)) {
     LOG(ERROR) << "Input path not set!";
+    throw false;
+  }
 
   _params = params;
   DLOG(INFO) << "JSON = " << std::setw(4) << _params;
@@ -192,7 +217,10 @@ void MRAC2MU::SetParams(nlohmann::json params){
 
 //Run pipeline
 bool MRAC2MU::Update(){
-  return ScaleAndReslice();
+  if (_isHead)
+    return ScaleAndResliceHead();
+
+  return Scale();
 }
 
 //Get final image.
@@ -278,12 +306,12 @@ bool MRAC2MU::Read(){
     //Execute pipeline
     dicomReader->Update();
 
-    //Orient to LPS
+    //Re-orient
     typedef typename itk::OrientImageFilter<MuMapImageType,MuMapImageType> OrienterType;
     typename OrienterType::Pointer orienter = OrienterType::New();
   
     orienter->UseImageDirectionOn();
-    orienter->SetDesiredCoordinateOrientation(itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LPS);
+    orienter->SetDesiredCoordinateOrientation(_outputOrientation);
     orienter->SetInput(dicomReader->GetOutput());
     orienter->Update();
 
@@ -469,9 +497,155 @@ bool MRAC2MU::GetStudyTime(std::string &studyTime){
   return true;
 }
 
+itk::SpatialOrientation::CoordinateTerms GetOrientationCode(char &c){
+
+  c = toupper(c);
+
+  const std::string validVals = "RLPAIS";
+
+  if (validVals.find(c) == std::string::npos){
+    LOG(ERROR) << c << " is not a valid orientation code value!";
+    return itk::SpatialOrientation::ITK_COORDINATE_UNKNOWN;
+  }
+
+  if (c == 'R')
+    return itk::SpatialOrientation::ITK_COORDINATE_Right;
+
+  if (c == 'L')
+    return itk::SpatialOrientation::ITK_COORDINATE_Left;  
+
+  if (c == 'P')
+    return itk::SpatialOrientation::ITK_COORDINATE_Posterior;  
+
+  if (c == 'A')
+    return itk::SpatialOrientation::ITK_COORDINATE_Anterior;  
+
+  if (c == 'I')
+    return itk::SpatialOrientation::ITK_COORDINATE_Inferior; 
+
+  if (c == 'S')
+    return itk::SpatialOrientation::ITK_COORDINATE_Superior; 
+
+  return itk::SpatialOrientation::ITK_COORDINATE_UNKNOWN;
+
+};
+
+bool MRAC2MU::SetDesiredCoordinateOrientation(const std::string &target){ 
+
+  std::vector<int> coordVals(3);
+
+  std::string orient = target;
+  //Check we have three letter code.
+  if (orient.size() != 3){
+    LOG(ERROR) << "Expected three letter orientation code. Read: " << orient;
+    return false;
+  }
+
+  //Check they are all valid identifiers
+  for (int i = 0; i < 3; i++) {
+    coordVals[i] = GetOrientationCode(orient[i]);
+    if (coordVals[i] == 0){
+      LOG(ERROR) << "Unknown coordinate: " << orient[i];
+      return false;
+    }
+  }
+
+  //See itkSpatialOrientation.h
+  itk::SpatialOrientation::ValidCoordinateOrientationFlags o = (itk::SpatialOrientation::ValidCoordinateOrientationFlags)(
+    ( coordVals[0] << itk::SpatialOrientation::ITK_COORDINATE_PrimaryMinor ) + 
+    ( coordVals[1] << itk::SpatialOrientation::ITK_COORDINATE_SecondaryMinor ) +
+    ( coordVals[2] << itk::SpatialOrientation::ITK_COORDINATE_TertiaryMinor ));
+
+  //Check we don't have an duplicates.
+  std::sort(coordVals.begin(), coordVals.end());
+  auto last = std::unique(coordVals.begin(), coordVals.end());
+  coordVals.erase(last, coordVals.end());
+
+  if (coordVals.size() != 3){
+    LOG(ERROR) << "Duplicate coordinate codes found: " << orient;
+    return false;
+  }
+
+  LOG(INFO) << "Using orientation code: " << orient;
+  _outputOrientation = o; 
+
+  return true;
+
+};
+
 //Divide by 10000 to get mu-values (cm-1).
 //Interpolate and reslice according to JSON params.
-bool MRAC2MU::ScaleAndReslice(){
+bool MRAC2MU::Scale(){
+
+  typedef typename itk::DivideImageFilter<MuMapImageType, MuMapImageType, MuMapImageType> DivideFilterType;
+
+  //Scale to mu-values
+  DivideFilterType::Pointer divide = DivideFilterType::New();
+  divide->SetInput( _inputImage );
+  divide->SetConstant( 10000.0 );
+
+  try {
+    divide->Update();
+  } catch (itk::ExceptionObject &ex){
+    //std::cout << ex << std::endl;
+    LOG(ERROR) << "Unable to scale!";
+    return false;
+  }
+
+  try {
+    //Duplicate contents or reader into _muImage.
+    typedef typename itk::ImageDuplicator<MuMapImageType> DuplicatorType;
+    typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+    duplicator->SetInputImage(divide->GetOutput());
+    duplicator->Update();
+    _muImage = duplicator->GetOutput();
+  } catch (itk::ExceptionObject &ex){
+    //std::cout << ex << std::endl;
+    LOG(ERROR) << "Unable to scale to mu!";
+    return false;
+  }
+
+  //Get max and min voxel values to insert into Interfile header.
+  typedef typename itk::MinimumMaximumImageCalculator <MuMapImageType> ImageCalculatorFilterType;
+  typename ImageCalculatorFilterType::Pointer minmax = ImageCalculatorFilterType::New();
+  minmax->SetImage(_muImage);
+
+  try {
+    minmax->Compute();
+  } catch (itk::ExceptionObject &ex){
+    //std::cout << ex << std::endl;
+    LOG(ERROR) << "Unable to calculate min/max!";
+    return false;
+  }
+
+  //Update the Interfile header with new sizes etc.
+  const MuMapImageType::SizeType& size = _muImage->GetLargestPossibleRegion().GetSize();
+  this->UpdateInterfile("NX", int(size[0]));
+  this->UpdateInterfile("NY", int(size[1]));
+  this->UpdateInterfile("NZ", int(size[2]));
+
+  const MuMapImageType::SpacingType& voxSize = _muImage->GetSpacing();
+  this->UpdateInterfile("SX", float(voxSize[0]));
+  this->UpdateInterfile("SY", float(voxSize[1]));
+  this->UpdateInterfile("SZ", float(voxSize[2]));  
+
+  this->UpdateInterfile("MAXVAL", float(minmax->GetMaximum()));
+  this->UpdateInterfile("MINVAL", float(minmax->GetMinimum()));
+
+  std::string studyDate;
+  if (GetStudyDate(studyDate))
+    this->UpdateInterfile("STUDYDATE", studyDate);
+
+  std::string studyTime;
+  if (GetStudyTime(studyTime))
+    this->UpdateInterfile("STUDYTIME", studyTime);
+
+  return true;
+}
+
+//Divide by 10000 to get mu-values (cm-1).
+//Interpolate and reslice according to JSON params.
+bool MRAC2MU::ScaleAndResliceHead(){
 
   typedef typename itk::DivideImageFilter<MuMapImageType, MuMapImageType, MuMapImageType> DivideFilterType;
 
