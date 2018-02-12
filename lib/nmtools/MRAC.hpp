@@ -497,7 +497,7 @@ bool MRAC2MU::GetStudyTime(std::string &studyTime){
   return true;
 }
 
-itk::SpatialOrientation::CoordinateTerms GetOrientationCode(char c){
+itk::SpatialOrientation::CoordinateTerms GetOrientationCode(char &c){
 
   c = toupper(c);
 
@@ -530,7 +530,7 @@ itk::SpatialOrientation::CoordinateTerms GetOrientationCode(char c){
 
 };
 
-bool MRAC2MU::SetDesiredCoordinateOrientation(const std::string orient){ 
+bool MRAC2MU::SetDesiredCoordinateOrientation(std::string orient){ 
 
   std::vector<int> coordVals(3);
 
