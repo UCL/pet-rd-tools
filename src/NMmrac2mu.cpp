@@ -129,8 +129,14 @@ int main(int argc, char **argv)
 
   if (vm.count("head")){
     mrac->SetIsHead(true);
+
+    std::string str = coordOrientation;
+    std::transform(str.begin(), str.end(),str.begin(), ::toupper);
+    if (str != "RAS"){
+        LOG(WARNING) << "You may want to use RAS for --head.";
+    }
   }
- 
+
   if (mrac->Update()){
     LOG(INFO) << "Scaling complete";
   } else {
