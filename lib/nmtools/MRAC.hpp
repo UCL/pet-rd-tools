@@ -679,6 +679,11 @@ bool MRAC2MU::ScaleAndResliceHead(){
   outputSize[1] = static_cast<SizeValueType>(inputSize[1] * inputSpacing[1] / outputSpacing[1] + .5);
   outputSize[2] = static_cast<SizeValueType>(inputSize[2] * inputSpacing[2] / outputSpacing[2] + .5);
 
+  if ((outputSize[0] % 2 == 1) or (outputSize[1] % 2 == 1)){
+    LOG(ERROR) << "Input x or y size is odd. Unsure how to resample!";
+    return false;
+  }
+
   typedef typename itk::ResampleImageFilter< MuMapImageType, MuMapImageType > ResampleFilterType;
   ResampleFilterType::Pointer resampler = ResampleFilterType::New();
   resampler->SetInput( _inputImage );
@@ -705,13 +710,21 @@ bool MRAC2MU::ScaleAndResliceHead(){
 
   //Pad x-y
   MuMapImageType::SizeType lowerExtendRegion;
-  lowerExtendRegion[0] = 100;
-  lowerExtendRegion[1] = 100;
+  int pad_x = (_params["sx"].get<int>() - outputSize[0]) / 2;
+  if (pad_x < 0) {
+    pad_x = 0;
+  }
+  int pad_y = (_params["sy"].get<int>() - outputSize[1]) / 2;
+  if (pad_y < 0) {
+    pad_y = 0;
+  }
+  lowerExtendRegion[0] = pad_x;
+  lowerExtendRegion[1] = pad_y;
   lowerExtendRegion[2] = 0;
 
   MuMapImageType::SizeType upperExtendRegion;
-  upperExtendRegion[0] = 100;
-  upperExtendRegion[1] = 100;
+  upperExtendRegion[0] = pad_x;
+  upperExtendRegion[1] = pad_y;
   upperExtendRegion[2] = 0;
 
   MuMapImageType::PixelType constantPixel = 0;
@@ -732,16 +745,19 @@ bool MRAC2MU::ScaleAndResliceHead(){
     return false;
   }
 
+  // magic numbers
+  int z_lcrop = 11;
+  int z_ucrop = 10;
   //crop in z direction.
   MuMapImageType::SizeType lcropSize;
   lcropSize[0] = 0;
   lcropSize[1] = 0;
-  lcropSize[2] = 11;
+  lcropSize[2] = z_lcrop;
 
   MuMapImageType::SizeType ucropSize;
   ucropSize[0] = 0;
   ucropSize[1] = 0;
-  ucropSize[2] = 10;
+  ucropSize[2] = z_ucrop;
 
   typedef typename itk::CropImageFilter <MuMapImageType, MuMapImageType> CropImageFilterType;
   CropImageFilterType::Pointer cropFilter = CropImageFilterType::New();
