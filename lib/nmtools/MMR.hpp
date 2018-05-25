@@ -695,7 +695,8 @@ bool MMR32BitList::ModifyHeader(const boost::filesystem::path src, const boost::
 
   pos = headerInfo.find(target);
   std::string line = headerInfo.substr(pos,headerInfo.length());
-  line = line.substr(0,line.find("\n"));
+  std::string::size_type end = std::min(line.find("\n"), line.find("\r"));
+  line = line.substr(0, end);
 
   std::string newLine = "name of data file:=" + dataFile.filename().string();
   headerInfo.replace(pos,line.length(), newLine);
@@ -732,7 +733,8 @@ bool MMRSino::ModifyHeader(const boost::filesystem::path src, const boost::files
 
   pos = headerInfo.find(target);
   std::string line = headerInfo.substr(pos,headerInfo.length());
-  line = line.substr(0,line.find("\n"));
+  std::string::size_type end = std::min(line.find("\n"), line.find("\r"));
+  line = line.substr(0, end);
 
   std::string newLine = "name of data file:=" + dataFile.filename().string();
   headerInfo.replace(pos,line.length(), newLine);
@@ -769,15 +771,19 @@ bool MMRNorm::ModifyHeader(const boost::filesystem::path src, const boost::files
 
   pos = headerInfo.find(target);
   std::string line = headerInfo.substr(pos,headerInfo.length());
-  line = line.substr(0,line.find("\n"));
+  std::string::size_type end = std::min(line.find("\n"), line.find("\r"));
+  line = line.substr(0, end);
 
-  std::string newLine = "name of data file:=" + dataFile.filename().string()  + "\r\n";
+  std::string newLine = "name of data file:=" + dataFile.filename().string();
+  // std::string newLine = "name of data file:=" + dataFile.filename().string()  + "\r\n";
+  DLOG(INFO) << "Patched";
   headerInfo.replace(pos,line.length(), newLine);
 
   target = "%data set [1]:={0,,";
   pos = headerInfo.find(target);
   line = headerInfo.substr(pos,headerInfo.length());
-  line = line.substr(0,line.find("\n"));
+  end = std::min(line.find("\n"), line.find("\r"));
+  line = line.substr(0, end);
 
   newLine = "%data set [1]:={0,," +  dataFile.filename().string() + "}";
   headerInfo.replace(pos,line.length(), newLine);
@@ -806,16 +812,26 @@ std::string MMRNorm::CleanUpLineEncoding( const std::string origStr ){
   ss << origStr;
   std::string outstr;
 
-  std::string line; 
-  std::string::size_type pos = 0;
-  std::string target = "\r\r";
+  std::string line;
+  std::string::size_type pos;
 
   while (std::getline(ss, line)) {
-      DLOG(INFO) << line;
-      pos = line.find(target);
-      if (pos != std::string::npos)
-            line.replace(pos,line.length(),"\r\n");
-      outstr += line;
+      // \r\r -> \r
+      pos = line.find("\r\r");
+      if (pos != std::string::npos) {
+            DLOG(INFO) << "fixed: " << line;
+            line.replace(pos,1,"");
+      } else {
+            DLOG(INFO) << "left:  " << line;
+      }
+
+      // no \r -> \r
+      pos = line.find("\r");
+      if (pos == std::string::npos) {
+            outstr += line + "\r\n";
+      } else {
+            outstr += line + "\n";
+      }
   }
 
   //Add carriage return at EOF
