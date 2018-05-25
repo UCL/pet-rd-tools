@@ -49,8 +49,10 @@ public:
 
   virtual bool ExtractHeader( const boost::filesystem::path dst );
   virtual bool ExtractData( const boost::filesystem::path dst )=0;
-  virtual bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile)=0;
   virtual boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype) = 0;
+  bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile);
+  //Deal with EOF in norm header.
+  std::string CleanUpLineEncoding( std::string );
 
   virtual ~IMMR(){};
 
@@ -73,7 +75,6 @@ class MMR32BitList : public IMMR {
 public:
   bool IsValid();
   bool ExtractData( const boost::filesystem::path dst );
-  bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile);
   boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype);
 
 };
@@ -85,7 +86,6 @@ class MMRSino : public IMMR {
 public:
   bool IsValid();
   bool ExtractData( const boost::filesystem::path dst );
-  bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile);
   boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype);
 };
 
@@ -103,8 +103,6 @@ public:
   bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile);
   boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype);
 protected:
-  //Deal with EOF in norm header.
-  std::string CleanUpLineEncoding( std::string );
 };
 
 class IRawDataFactory {
@@ -678,7 +676,7 @@ bool MMRNorm::IsValid(){
 }
 
 //Re-write list mode data file location in header.
-bool MMR32BitList::ModifyHeader(const boost::filesystem::path src, const boost::filesystem::path dataFile){
+bool IMMR::ModifyHeader(const boost::filesystem::path src, const boost::filesystem::path dataFile){
 
   std::ifstream headerFile( boost::filesystem::canonical( src ).string().c_str() );
   std::stringstream buffer;
@@ -704,47 +702,12 @@ bool MMR32BitList::ModifyHeader(const boost::filesystem::path src, const boost::
   std::ofstream outfile( src.string().c_str(), std::ios::out | std::ios::binary);
 
   if ( ! outfile.is_open() ) {
-      LOG(ERROR) << "Unable to update listmode header in " << src;
+      LOG(ERROR) << "Unable to update header in " << src;
       return false;
   }
 
-  outfile << headerInfo;
-  outfile.close();
-
-  return true;
-
-}
-
-//Re-write sinogram data file location in header.
-bool MMRSino::ModifyHeader(const boost::filesystem::path src, const boost::filesystem::path dataFile){
-
-  std::ifstream headerFile( boost::filesystem::canonical( src ).string().c_str() );
-  std::stringstream buffer;
-  buffer << headerFile.rdbuf();
-
-  headerFile.close();
-
-  DLOG(INFO) << "Read " << src;
-
-  std::string headerInfo = buffer.str();
-
-  std::string::size_type pos = 0;
-  std::string target = "name of data file";
-
-  pos = headerInfo.find(target);
-  std::string line = headerInfo.substr(pos,headerInfo.length());
-  std::string::size_type end = std::min(line.find("\n"), line.find("\r"));
-  line = line.substr(0, end);
-
-  std::string newLine = "name of data file:=" + dataFile.filename().string();
-  headerInfo.replace(pos,line.length(), newLine);
-
-  std::ofstream outfile( src.string().c_str(), std::ios::out | std::ios::binary);
-
-  if ( ! outfile.is_open() ) {
-      LOG(ERROR) << "Unable to update sinogram header in " << src;
-      return false;
-  }
+  //Find /r/r/n and replace with /r/n.
+  headerInfo = CleanUpLineEncoding( headerInfo );
 
   outfile << headerInfo;
   outfile.close();
@@ -759,33 +722,19 @@ bool MMRNorm::ModifyHeader(const boost::filesystem::path src, const boost::files
   std::ifstream headerFile( boost::filesystem::canonical( src ).string().c_str() );
   std::stringstream buffer;
   buffer << headerFile.rdbuf();
-
   headerFile.close();
-
-  DLOG(INFO) << "Read " << src;
 
   std::string headerInfo = buffer.str();
 
   std::string::size_type pos = 0;
-  std::string target = "name of data file";
+  std::string target = "%data set [1]:={0,,";
 
   pos = headerInfo.find(target);
   std::string line = headerInfo.substr(pos,headerInfo.length());
   std::string::size_type end = std::min(line.find("\n"), line.find("\r"));
   line = line.substr(0, end);
 
-  std::string newLine = "name of data file:=" + dataFile.filename().string();
-  // std::string newLine = "name of data file:=" + dataFile.filename().string()  + "\r\n";
-  DLOG(INFO) << "Patched";
-  headerInfo.replace(pos,line.length(), newLine);
-
-  target = "%data set [1]:={0,,";
-  pos = headerInfo.find(target);
-  line = headerInfo.substr(pos,headerInfo.length());
-  end = std::min(line.find("\n"), line.find("\r"));
-  line = line.substr(0, end);
-
-  newLine = "%data set [1]:={0,," +  dataFile.filename().string() + "}";
+  std::string newLine = "%data set [1]:={0,," +  dataFile.filename().string() + "}";
   headerInfo.replace(pos,line.length(), newLine);
 
   std::ofstream outfile( src.string().c_str(), std::ios::out | std::ios::binary);
@@ -801,12 +750,15 @@ bool MMRNorm::ModifyHeader(const boost::filesystem::path src, const boost::files
   outfile << headerInfo;
   outfile.close();
 
+  // Also need to run the superclass to update name of data file and run cleanup
+  IMMR::ModifyHeader(src, dataFile);
+
   return true;
 
 }
 
 //Removes \r\r\n line endings in mMR norm header and replaces it with \r\n
-std::string MMRNorm::CleanUpLineEncoding( const std::string origStr ){
+std::string IMMR::CleanUpLineEncoding( const std::string origStr ){
 
   std::stringstream ss;
   ss << origStr;
