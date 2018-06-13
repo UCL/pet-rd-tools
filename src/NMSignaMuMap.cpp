@@ -1,5 +1,5 @@
 /*
-   NMmrac2mu.cpp
+   NMSignaMuMap.cpp
 
    Author:      Benjamin A. Thomas
 
@@ -16,7 +16,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-   This program generates a mu-map from Siemens mMR MRAC for PET reconstruction.
+   This program generates a mu-map from GE Signa data for PET reconstruction.
  */
 
 #include <gdcmReader.h>
@@ -31,7 +31,7 @@
 int main(int argc, char **argv)
 {
 
-  const char* APP_NAME = "nm_mrac2mu";
+  const char* APP_NAME = "nm_signa2mu";
 
   std::string inputDirPath;
   std::string outputFilePath = "";
@@ -50,7 +50,6 @@ int main(int argc, char **argv)
     ("input,i", po::value<std::string>(&inputDirPath)->required(), "Input directory")
     ("output,o", po::value<std::string>(&outputFilePath)->required(), "Output file")
     ("orient", po::value<std::string>(&coordOrientation), "Output orientation: e.g. RAI or LPS (default = RAI)")
-    ("head", "Output mu-map for mMR brain")
     ("log,l", "Write log file");
 
   //Evaluate command line options

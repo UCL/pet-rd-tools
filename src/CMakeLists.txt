@@ -19,6 +19,14 @@ target_link_libraries(nm_mrac2mu
       glog 
     )
 
+add_executable(nm_signa2mu NMSignaMuMap.cpp  )
+target_link_libraries(nm_signa2mu
+        ${Boost_LIBRARIES}
+        ${ITK_LIBRARIES}
+        glog
+        )
+
 install(TARGETS nm_validate DESTINATION bin)
 install(TARGETS nm_extract DESTINATION bin)
 install(TARGETS nm_mrac2mu DESTINATION bin)
+install(TARGETS nm_signa2mu DESTINATION bin)

@@ -1,9 +1,9 @@
 /*
-   MRAC.hpp
+   SignaMRAC.hpp
 
    Author:      Benjamin A. Thomas
 
-   Copyright 2017 Institute of Nuclear Medicine, University College London.
+   Copyright 2018 Institute of Nuclear Medicine, University College London.
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -16,11 +16,11 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-   Generates a mu-map from Siemens mMR MRAC for PET reconstruction.
+   Generates a mu-map from GE Signa data for PET reconstruction.
  */
 
-#ifndef MRAC_HPP
-#define MRAC_HPP
+#ifndef SIGNAMRAC_HPP
+#define SIGNAMRAC_HPP
 
 #include <iostream>
 #include <string>
@@ -496,39 +496,6 @@ bool MRAC2MU::GetStudyTime(std::string &studyTime){
 
   return true;
 }
-
-itk::SpatialOrientation::CoordinateTerms GetOrientationCode(char &c){
-
-  c = toupper(c);
-
-  const std::string validVals = "RLPAIS";
-
-  if (validVals.find(c) == std::string::npos){
-    LOG(ERROR) << c << " is not a valid orientation code value!";
-    return itk::SpatialOrientation::ITK_COORDINATE_UNKNOWN;
-  }
-
-  if (c == 'R')
-    return itk::SpatialOrientation::ITK_COORDINATE_Right;
-
-  if (c == 'L')
-    return itk::SpatialOrientation::ITK_COORDINATE_Left;  
-
-  if (c == 'P')
-    return itk::SpatialOrientation::ITK_COORDINATE_Posterior;  
-
-  if (c == 'A')
-    return itk::SpatialOrientation::ITK_COORDINATE_Anterior;  
-
-  if (c == 'I')
-    return itk::SpatialOrientation::ITK_COORDINATE_Inferior; 
-
-  if (c == 'S')
-    return itk::SpatialOrientation::ITK_COORDINATE_Superior; 
-
-  return itk::SpatialOrientation::ITK_COORDINATE_UNKNOWN;
-
-};
 
 bool MRAC2MU::SetDesiredCoordinateOrientation(const std::string &target){ 
 

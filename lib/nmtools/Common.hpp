@@ -23,6 +23,8 @@
 #ifndef COMMON_HPP
 #define COMMON_HPP
 
+#include <itkImage.h>
+
 namespace nmtools {
 
 #ifdef __APPLE__
@@ -133,6 +135,39 @@ FileType GetFileType( boost::filesystem::path src){
   }
 
   return foundFileType;
+}
+
+itk::SpatialOrientation::CoordinateTerms GetOrientationCode(char &c){
+
+  c = toupper(c);
+
+  const std::string validVals = "RLPAIS";
+
+  if (validVals.find(c) == std::string::npos){
+    LOG(ERROR) << c << " is not a valid orientation code value!";
+    return itk::SpatialOrientation::ITK_COORDINATE_UNKNOWN;
+  }
+
+  if (c == 'R')
+    return itk::SpatialOrientation::ITK_COORDINATE_Right;
+
+  if (c == 'L')
+    return itk::SpatialOrientation::ITK_COORDINATE_Left;
+
+  if (c == 'P')
+    return itk::SpatialOrientation::ITK_COORDINATE_Posterior;
+
+  if (c == 'A')
+    return itk::SpatialOrientation::ITK_COORDINATE_Anterior;
+
+  if (c == 'I')
+    return itk::SpatialOrientation::ITK_COORDINATE_Inferior;
+
+  if (c == 'S')
+    return itk::SpatialOrientation::ITK_COORDINATE_Superior;
+
+  return itk::SpatialOrientation::ITK_COORDINATE_UNKNOWN;
+
 }
 
 }
