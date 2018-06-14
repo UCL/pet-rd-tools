@@ -88,9 +88,7 @@ public:
   //Accept alternative reslicing parameters.
   void SetParams(nlohmann::json params);
 
-  //Set output orientation
-  bool SetDesiredCoordinateOrientation(const std::string &target);
-
+  //Toggle whether mMR head or not.
   void SetIsHead(bool bStatus){ _isHead = bStatus; };
 
   //Trigger exexcution
@@ -154,7 +152,7 @@ protected:
 //Construct object from source directory.
 MRAC2MU::MRAC2MU(boost::filesystem::path src, std::string orientationCode = "RAI"){
 
-  if (!SetDesiredCoordinateOrientation(orientationCode)){
+  if (!nmtools::SetDesiredCoordinateOrientation(orientationCode,_outputOrientation)){
     throw false;
   }
 
@@ -171,7 +169,7 @@ MRAC2MU::MRAC2MU(boost::filesystem::path src, std::string orientationCode = "RAI
 //params.
 MRAC2MU::MRAC2MU(boost::filesystem::path src, nlohmann::json params, std::string orientationCode = "RAI"){
 
-  if (!SetDesiredCoordinateOrientation(orientationCode)){
+  if (!nmtools::SetDesiredCoordinateOrientation(orientationCode, _outputOrientation)){
     throw false;
   }
 
@@ -496,49 +494,6 @@ bool MRAC2MU::GetStudyTime(std::string &studyTime){
 
   return true;
 }
-
-bool MRAC2MU::SetDesiredCoordinateOrientation(const std::string &target){ 
-
-  std::vector<int> coordVals(3);
-
-  std::string orient = target;
-  //Check we have three letter code.
-  if (orient.size() != 3){
-    LOG(ERROR) << "Expected three letter orientation code. Read: " << orient;
-    return false;
-  }
-
-  //Check they are all valid identifiers
-  for (int i = 0; i < 3; i++) {
-    coordVals[i] = GetOrientationCode(orient[i]);
-    if (coordVals[i] == 0){
-      LOG(ERROR) << "Unknown coordinate: " << orient[i];
-      return false;
-    }
-  }
-
-  //See itkSpatialOrientation.h
-  itk::SpatialOrientation::ValidCoordinateOrientationFlags o = (itk::SpatialOrientation::ValidCoordinateOrientationFlags)(
-    ( coordVals[0] << itk::SpatialOrientation::ITK_COORDINATE_PrimaryMinor ) + 
-    ( coordVals[1] << itk::SpatialOrientation::ITK_COORDINATE_SecondaryMinor ) +
-    ( coordVals[2] << itk::SpatialOrientation::ITK_COORDINATE_TertiaryMinor ));
-
-  //Check we don't have an duplicates.
-  std::sort(coordVals.begin(), coordVals.end());
-  auto last = std::unique(coordVals.begin(), coordVals.end());
-  coordVals.erase(last, coordVals.end());
-
-  if (coordVals.size() != 3){
-    LOG(ERROR) << "Duplicate coordinate codes found: " << orient;
-    return false;
-  }
-
-  LOG(INFO) << "Using orientation code: " << orient;
-  _outputOrientation = o; 
-
-  return true;
-
-};
 
 //Divide by 10000 to get mu-values (cm-1).
 //Interpolate and reslice according to JSON params.

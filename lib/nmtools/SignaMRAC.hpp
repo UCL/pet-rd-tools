@@ -69,8 +69,8 @@ const nlohmann::json resliceDefaultParams = R"(
 }
 )"_json;
 
-class MRAC2MU {
-  //Class for converting from mMR MRAC to mu values.
+class SignaMRAC2MU {
+  //Class for converting from Signa MRAC to mu values.
 
   typedef itk::GDCMImageIO ImageIOType;
 
@@ -78,18 +78,15 @@ public:
 
   //Either just empty constructor, with input directory or
   //with input directory and user-specified json params.
-  MRAC2MU(){};
-  explicit MRAC2MU(boost::filesystem::path src, std::string orientationCode);
-  MRAC2MU(boost::filesystem::path src, nlohmann::json params, std::string orientationCode);
+  SignaMRAC2MU(){};
+  explicit SignaMRAC2MU(boost::filesystem::path src, std::string orientationCode);
+  SignaMRAC2MU(boost::filesystem::path src, nlohmann::json params, std::string orientationCode);
 
   //Set input file and attempt to read.
   bool SetInput(boost::filesystem::path src);
 
   //Accept alternative reslicing parameters.
   void SetParams(nlohmann::json params);
-
-  //Set output orientation
-  bool SetDesiredCoordinateOrientation(const std::string &target);
 
   void SetIsHead(bool bStatus){ _isHead = bStatus; };
 
@@ -152,7 +149,7 @@ protected:
 };
 
 //Construct object from source directory.
-MRAC2MU::MRAC2MU(boost::filesystem::path src, std::string orientationCode = "RAI"){
+SignaMRAC2MU::SignaMRAC2MU(boost::filesystem::path src, std::string orientationCode = "RAI"){
 
   if (!SetDesiredCoordinateOrientation(orientationCode)){
     throw false;
