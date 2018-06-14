@@ -25,7 +25,7 @@
 #include <glog/logging.h>
 #include <memory>
 
-#include "nmtools/MMRMRAC.hpp"
+#include "nmtools/MRAC-mMR.hpp"
 #include "EnvironmentInfo.h"
 
 int main(int argc, char **argv)
@@ -118,10 +118,10 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  std::unique_ptr<nm::MRAC2MU> mrac;
+  std::unique_ptr<nm::MMRMRAC> mrac;
 
   try {
-    mrac.reset(new nm::MRAC2MU(srcPath, coordOrientation));
+    mrac.reset(new nm::MMRMRAC(srcPath, coordOrientation));
   } catch (bool){
     LOG(ERROR) << "Failed to create MRAC converter!";
     return EXIT_FAILURE;
