@@ -91,6 +91,10 @@ bool MMRMRAC::ScaleAndResliceHead(){
   const MuMapImageType::SizeType& inputSize =
       inputRegion.GetSize();
 
+  //JSON params for reslicing.
+  if (_params.empty())
+    _params = resliceDefaultParams;
+
   //Get new voxel size from JSON params.
   //Unsafe.
   MuMapImageType::SpacingType outputSpacing;
