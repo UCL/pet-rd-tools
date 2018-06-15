@@ -51,10 +51,7 @@ public:
   bool Update();
 
 protected:
-
-  //JSON params for reslicing.
-  nlohmann::json _params = resliceDefaultParams;
-
+  
   bool ScaleAndResliceHead();
 
 };
