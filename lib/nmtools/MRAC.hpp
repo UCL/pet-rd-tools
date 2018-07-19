@@ -675,21 +675,44 @@ bool MRAC2MU::ScaleAndResliceHead(){
   //Reslice to new matrix size.
   MuMapImageType::SizeType   outputSize;
   typedef MuMapImageType::SizeType::SizeValueType SizeValueType;
+  // outputSize[0] = _params["sx"];
+  // outputSize[1] = _params["sy"];
+  // outputSize[2] = _params["sz"];
+  // outputSize[0] = 344;
+  // outputSize[1] = 344;
+  // outputSize[2] = 127 + 11;
   outputSize[0] = static_cast<SizeValueType>(inputSize[0] * inputSpacing[0] / outputSpacing[0] + .5);
   outputSize[1] = static_cast<SizeValueType>(inputSize[1] * inputSpacing[1] / outputSpacing[1] + .5);
   outputSize[2] = static_cast<SizeValueType>(inputSize[2] * inputSpacing[2] / outputSpacing[2] + .5);
 
-  if ((outputSize[0] % 2 == 1) or (outputSize[1] % 2 == 1)){
-    LOG(ERROR) << "Input x or y size is odd. Unsure how to resample!";
-    return false;
-  }
+  // if ((outputSize[0] % 2 == 1) or (outputSize[1] % 2 == 1)){
+  //   LOG(ERROR) << "Input x or y size is odd. Unsure how to resample!";
+  //   return false;
+  // }
+
+  //Reslice to new matrix size.
+  MuMapImageType::PointType outputOrigin;
+  outputOrigin[0] = -static_cast<float>(outputSize[0]) * outputSpacing[0] / 2.;
+  outputOrigin[1] = -static_cast<float>(outputSize[1]) * outputSpacing[1] / 2.;
+  // outputOrigin[0] = _inputImage->GetOrigin()[0];
+  // outputOrigin[1] = _inputImage->GetOrigin()[1];
+  outputOrigin[2] = _inputImage->GetOrigin()[2];
+
+  std::cout << "in Origin" << _inputImage->GetOrigin() << std::endl;
+  std::cout << "in Spacing" << _inputImage->GetSpacing() << std::endl;
+  std::cout << "in Direction" << _inputImage->GetDirection() << std::endl;
+  std::cout << "in Size" << _inputImage->GetLargestPossibleRegion().GetSize() << std::endl;
+  std::cout << "out Origin" << outputOrigin << std::endl;
+  std::cout << "out Spacing" << outputSpacing << std::endl;
+  std::cout << "out Direction" << _inputImage->GetDirection() << std::endl;
+  std::cout << "out Size" << outputSize << std::endl;
 
   typedef typename itk::ResampleImageFilter< MuMapImageType, MuMapImageType > ResampleFilterType;
   ResampleFilterType::Pointer resampler = ResampleFilterType::New();
   resampler->SetInput( _inputImage );
   resampler->SetTransform( transform );
   resampler->SetInterpolator( interpolator );
-  resampler->SetOutputOrigin ( _inputImage->GetOrigin());
+  resampler->SetOutputOrigin ( outputOrigin );
   resampler->SetOutputSpacing ( outputSpacing );
   resampler->SetOutputDirection ( _inputImage->GetDirection());
   resampler->SetSize ( outputSize );
@@ -779,6 +802,11 @@ bool MRAC2MU::ScaleAndResliceHead(){
     LOG(ERROR) << "Unable to scale to mu!";
     return false;
   }
+
+  std::cout << "final Origin" << _muImage->GetOrigin() << std::endl;
+  std::cout << "final Spacing" << _muImage->GetSpacing() << std::endl;
+  std::cout << "final Direction" << _muImage->GetDirection() << std::endl;
+  std::cout << "final Size" << _muImage->GetLargestPossibleRegion().GetSize() << std::endl;
 
   //Get max and min voxel values to insert into Interfile header.
   typedef typename itk::MinimumMaximumImageCalculator <MuMapImageType> ImageCalculatorFilterType;
