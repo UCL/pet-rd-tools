@@ -25,7 +25,7 @@
 #include <glog/logging.h>
 #include <memory>
 
-#include "nmtools/MMRMRAC.hpp"
+#include "nmtools/MRAC-Signa.hpp"
 #include "EnvironmentInfo.h"
 
 int main(int argc, char **argv)
