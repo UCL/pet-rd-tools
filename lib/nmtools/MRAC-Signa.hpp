@@ -46,7 +46,8 @@
 #include <boost/any.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "nmtools/Common.hpp"
+#include "Common.hpp"
+#include "MRAC.hpp"
 #include "json/json.hpp"
 
 namespace nmtools {
@@ -69,8 +70,9 @@ const nlohmann::json resliceDefaultParams = R"(
 }
 )"_json;
 
-class SignaMRAC2MU {
+class SignaMRAC2MU : public MRAC2MU {
   //Class for converting from Signa MRAC to mu values.
+  using MRAC2MU::MRAC2MU;
 
   typedef itk::GDCMImageIO ImageIOType;
 
@@ -79,8 +81,6 @@ public:
   //Either just empty constructor, with input directory or
   //with input directory and user-specified json params.
   SignaMRAC2MU(){};
-  explicit SignaMRAC2MU(boost::filesystem::path src, std::string orientationCode);
-  SignaMRAC2MU(boost::filesystem::path src, nlohmann::json params, std::string orientationCode);
 
   //Set input file and attempt to read.
   bool SetInput(boost::filesystem::path src);
@@ -95,12 +95,6 @@ public:
 
   //Return final image.
   const typename MuMapImageType::Pointer GetOutput();
-
-  //Get manufactured Interfile header. 
-  std::string GetInterfileHdr() const;
-
-  //Write file(s) to dst.
-  bool Write(boost::filesystem::path dst);
 
 protected:
 
@@ -148,92 +142,25 @@ protected:
 
 };
 
-//Construct object from source directory.
-SignaMRAC2MU::SignaMRAC2MU(boost::filesystem::path src, std::string orientationCode = "RAI"){
-
-  if (!SetDesiredCoordinateOrientation(orientationCode)){
-    throw false;
-  }
-
-  if (!SetInput(src)) {
-    LOG(ERROR) << "Input path not set!";
-    throw false;
-  }
-
-  DLOG(INFO) << "SRC = " << _srcPath;
-
-}
-
-//Construct object from source directory and use user-specified
-//params.
-MRAC2MU::MRAC2MU(boost::filesystem::path src, nlohmann::json params, std::string orientationCode = "RAI"){
-
-  if (!SetDesiredCoordinateOrientation(orientationCode)){
-    throw false;
-  }
-
-  if (!SetInput(src)) {
-    LOG(ERROR) << "Input path not set!";
-    throw false;
-  }
-
-  _params = params;
-  DLOG(INFO) << "JSON = " << std::setw(4) << _params;
-}
-
-//Check if the source dir is what is expected.
-bool MRAC2MU::SetInput(boost::filesystem::path src){
-  //TODO: Should probably check whether src contains
-  //DICOM data. (11/12/2017)
-
-  //Check if input file even exists!
-  if (!boost::filesystem::exists(src)) {
-    LOG(ERROR) << "Input path " << src << " does not exist!";
-    return false;
-  }
-
-  //Check if the input is a file.
-  if (!boost::filesystem::is_directory(src)) {
-    LOG(ERROR) << src.native() << " does not appear to be a  directory!";
-    return false;
-  }
-
-  _srcPath = src;
-
-  DLOG(INFO) << "SRC = " << _srcPath;
-
-  return Read();
-}
-
 //Use user-specified reslicing parameters.
-void MRAC2MU::SetParams(nlohmann::json params){
+void SignaMRAC2MU::SetParams(nlohmann::json params){
   //TODO: validate JSON inputs (11/12/2017)
 
   _params = params;
 }
 
 //Run pipeline
-bool MRAC2MU::Update(){
+bool SignaMRAC2MU::Update(){
   if (_isHead)
     return ScaleAndResliceHead();
 
   return Scale();
 }
 
-//Get final image.
-const typename MuMapImageType::Pointer MRAC2MU::GetOutput(){
-  return _muImage;
-}
-
-//Return header.
-std::string MRAC2MU::GetInterfileHdr() const {
-  return _header;
-}
-
 //- Reads input directory with GDCM (via ITK).
 //- Creates image from slices and orients to LPS.
 //- Creates Interfile skeleton.
-bool MRAC2MU::Read(){
+bool SignaMRAC2MU::Read(){
 
   //Generic DICOM to ITK image read.
   //Will only convert first series in a folder.
@@ -393,7 +320,7 @@ bool MRAC2MU::Read(){
 
 //Insert info. into Interfile header.
 //Casting might not be totally safe.
-bool MRAC2MU::UpdateInterfile(const std::string &key, const boost::any info){
+bool SignaMRAC2MU::UpdateInterfile(const std::string &key, const boost::any info){
 
   std::string updateStr;
 
@@ -458,7 +385,7 @@ bool MRAC2MU::UpdateInterfile(const std::string &key, const boost::any info){
 }
 
 //Get study date from DICOM and convert from 'YYYYMMDD' to 'YYYY:MM:DD'.
-bool MRAC2MU::GetStudyDate(std::string &studyDate){
+bool SignaMRAC2MU::GetStudyDate(std::string &studyDate){
 
   std::string infoStr;
 
@@ -477,7 +404,7 @@ bool MRAC2MU::GetStudyDate(std::string &studyDate){
 }
 
 //Get study time from DICOM and convert from 'HHMMSS.mmmmmm' to 'HH:MM:SS'.
-bool MRAC2MU::GetStudyTime(std::string &studyTime){
+bool SignaMRAC2MU::GetStudyTime(std::string &studyTime){
 
   std::string infoStr;
 
@@ -494,52 +421,9 @@ bool MRAC2MU::GetStudyTime(std::string &studyTime){
   return true;
 }
 
-bool MRAC2MU::SetDesiredCoordinateOrientation(const std::string &target){ 
-
-  std::vector<int> coordVals(3);
-
-  std::string orient = target;
-  //Check we have three letter code.
-  if (orient.size() != 3){
-    LOG(ERROR) << "Expected three letter orientation code. Read: " << orient;
-    return false;
-  }
-
-  //Check they are all valid identifiers
-  for (int i = 0; i < 3; i++) {
-    coordVals[i] = GetOrientationCode(orient[i]);
-    if (coordVals[i] == 0){
-      LOG(ERROR) << "Unknown coordinate: " << orient[i];
-      return false;
-    }
-  }
-
-  //See itkSpatialOrientation.h
-  itk::SpatialOrientation::ValidCoordinateOrientationFlags o = (itk::SpatialOrientation::ValidCoordinateOrientationFlags)(
-    ( coordVals[0] << itk::SpatialOrientation::ITK_COORDINATE_PrimaryMinor ) + 
-    ( coordVals[1] << itk::SpatialOrientation::ITK_COORDINATE_SecondaryMinor ) +
-    ( coordVals[2] << itk::SpatialOrientation::ITK_COORDINATE_TertiaryMinor ));
-
-  //Check we don't have an duplicates.
-  std::sort(coordVals.begin(), coordVals.end());
-  auto last = std::unique(coordVals.begin(), coordVals.end());
-  coordVals.erase(last, coordVals.end());
-
-  if (coordVals.size() != 3){
-    LOG(ERROR) << "Duplicate coordinate codes found: " << orient;
-    return false;
-  }
-
-  LOG(INFO) << "Using orientation code: " << orient;
-  _outputOrientation = o; 
-
-  return true;
-
-};
-
 //Divide by 10000 to get mu-values (cm-1).
 //Interpolate and reslice according to JSON params.
-bool MRAC2MU::Scale(){
+bool SignaMRAC2MU::Scale(){
 
   typedef typename itk::DivideImageFilter<MuMapImageType, MuMapImageType, MuMapImageType> DivideFilterType;
 
@@ -609,7 +493,7 @@ bool MRAC2MU::Scale(){
 
 //Divide by 10000 to get mu-values (cm-1).
 //Interpolate and reslice according to JSON params.
-bool MRAC2MU::ScaleAndResliceHead(){
+bool SignaMRAC2MU::ScaleAndResliceHead(){
 
   typedef typename itk::DivideImageFilter<MuMapImageType, MuMapImageType, MuMapImageType> DivideFilterType;
 
@@ -778,74 +662,6 @@ bool MRAC2MU::ScaleAndResliceHead(){
   std::string studyTime;
   if (GetStudyTime(studyTime))
     this->UpdateInterfile("STUDYTIME", studyTime);
-
-  return true;
-}
-
-//Dump image (and header if applicable) to disk.
-bool MRAC2MU::Write(boost::filesystem::path dst) {
-
-  if (dst.extension() == ".hv"){
-   return WriteToInterFile(dst);
-  }
-
-  //Write output file
-  typedef typename itk::ImageFileWriter<MuMapImageType> WriterType; 
-
-  typename WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( dst.string().c_str() );
-  writer->SetInput( _muImage );
-
-  try {
-    writer->Update();
-  }
-  catch (itk::ExceptionObject &ex){
-    LOG(ERROR) << " Could not write output file!";
-    return false;    
-  }
-
-  return true;
-
-}
-
-//Write Interfile header and image pair to disk.
-bool MRAC2MU::WriteToInterFile(boost::filesystem::path dst){
-
-  boost::filesystem::path altPath = boost::filesystem::change_extension(dst, ".mhd");
-  //Write output file
-  typedef typename itk::ImageFileWriter<MuMapImageType> WriterType; 
-
-  typename WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( altPath.string().c_str() );
-  writer->SetInput( _muImage );
-
-  try {
-    writer->Update();
-  }
-  catch (itk::ExceptionObject &ex){
-    LOG(ERROR) << " Could not write output data!";
-    return false;    
-  }
-
-  //Put new data file in header.
-  boost::filesystem::path dataFile =  dst.replace_extension(".raw");
-  this->UpdateInterfile("DATAFILE", dataFile.filename().string());
-
-  std::string outputHeader = GetInterfileHdr();
-
-  altPath = boost::filesystem::change_extension(dst, ".hv");
-
-  std::ofstream infoStream;
-
-  if ( infoStream ) {
-    infoStream.open(altPath.string().c_str());
-    infoStream << outputHeader;
-    infoStream.close();
-    LOG(INFO) << "Wrote Interfile header to " << altPath;
-  } else {
-    LOG(INFO) << "Could not write Interfile header to " << altPath;
-    return false;
-  }
 
   return true;
 }

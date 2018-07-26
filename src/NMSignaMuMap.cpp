@@ -117,10 +117,10 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  std::unique_ptr<nm::MRAC2MU> mrac;
+  std::unique_ptr<nm::SignaMRAC2MU> mrac;
 
   try {
-    mrac.reset(new nm::MRAC2MU(srcPath, coordOrientation));
+    mrac.reset(new nm::SignaMRAC2MU(srcPath, coordOrientation));
   } catch (bool){
     LOG(ERROR) << "Failed to create MRAC converter!";
     return EXIT_FAILURE;
