@@ -115,31 +115,6 @@ protected:
   bool GetStudyDate(std::string &studyDate);
   bool GetStudyTime(std::string &studyTime);
 
-  //Original image
-  typename MuMapImageType::Pointer _inputImage;
-
-  //Output image
-  typename MuMapImageType::Pointer _muImage;
-
-  //Interfile header
-  std::string _header;
-
-  //DICOM data
-  typename ImageIOType::Pointer _pDicomInfo;
-
-  //Source path
-  boost::filesystem::path _srcPath;
-
-  //JSON params for reslicing.
-  nlohmann::json _params = resliceDefaultParams;
-
-  //Default image orientation is RAI
-  itk::SpatialOrientation::ValidCoordinateOrientationFlags _outputOrientation 
-    = itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI;
-
-  //Reslice and crop into 344x344 matrix for brain. Off by default.
-  bool _isHead = false;
-
 };
 
 //Use user-specified reslicing parameters.
@@ -435,7 +410,7 @@ bool SignaMRAC2MU::Scale(){
   try {
     divide->Update();
   } catch (itk::ExceptionObject &ex){
-    //std::cout << ex << std::endl;
+    std::cout << ex << std::endl;
     LOG(ERROR) << "Unable to scale!";
     return false;
   }
@@ -465,7 +440,7 @@ bool SignaMRAC2MU::Scale(){
     LOG(ERROR) << "Unable to calculate min/max!";
     return false;
   }
-
+  
   //Update the Interfile header with new sizes etc.
   const MuMapImageType::SizeType& size = _muImage->GetLargestPossibleRegion().GetSize();
   this->UpdateInterfile("NX", int(size[0]));

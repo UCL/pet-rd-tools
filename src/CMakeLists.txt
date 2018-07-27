@@ -26,7 +26,15 @@ target_link_libraries(nm_signa2mu
         glog
         )
 
+add_executable(signa signa.cpp  )
+target_link_libraries(signa
+        ${Boost_LIBRARIES}
+        ${ITK_LIBRARIES}
+        glog
+        )
+
 install(TARGETS nm_validate DESTINATION bin)
 install(TARGETS nm_extract DESTINATION bin)
 install(TARGETS nm_mrac2mu DESTINATION bin)
 install(TARGETS nm_signa2mu DESTINATION bin)
+install(TARGETS signa DESTINATION bin)
