@@ -346,8 +346,8 @@ bool MRAC2MU::Read(){
   ss << "scaling factor (mm/pixel) [1]:=<%%SX%%>" << std::endl;
   ss << "scaling factor (mm/pixel) [2]:=<%%SY%%>" << std::endl;
   ss << "scaling factor (mm/pixel) [3]:=<%%SZ%%>" << std::endl;
-  ss << "start horizontal bed position (mm):=-10" << std::endl;
-  ss << "end horizontal bed position (mm):=-10" << std::endl;
+  ss << "start horizontal bed position (mm):=0" << std::endl;
+  ss << "end horizontal bed position (mm):=0" << std::endl;
   ss << "start vertical bed position (mm):=0.0" << std::endl;
 
   ss << std::endl << "!IMAGE DATA DESCRIPTION:=" << std::endl;
