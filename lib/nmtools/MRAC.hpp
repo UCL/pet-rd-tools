@@ -91,9 +91,9 @@ public:
 protected:
 
   //File reading
-  bool Read();
+  virtual bool Read();
 
-  //Do reslicing etc.
+//Do reslicing etc.
   bool Scale();
   bool ScaleAndResliceHead();
 
@@ -188,7 +188,7 @@ bool MRAC2MU::SetInput(boost::filesystem::path src){
 
   DLOG(INFO) << "SRC = " << _srcPath;
 
-  return Read();
+  return true;
 }
 
 //Use user-specified reslicing parameters.
@@ -328,6 +328,7 @@ bool MRAC2MU::Read(){
   
   ss << std::endl << "!GENERAL IMAGE DATA:=" << std::endl;
   ss << "!type of data := PET" << std::endl;
+
 
   ss << std::endl << "%study date (yyyy:mm:dd):=<%%STUDYDATE%%>"  << std::endl;
   ss << "%study time (hh:mm:ss GMT+00:00):=<%%STUDYTIME%%>" << std::endl;

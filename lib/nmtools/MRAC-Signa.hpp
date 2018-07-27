@@ -90,7 +90,10 @@ public:
 
   void SetIsHead(bool bStatus){ _isHead = bStatus; };
 
-  //Trigger exexcution
+  //File reading
+  bool Read();
+
+  //Trigger execution
   bool Update();
 
   //Return final image.
@@ -98,8 +101,6 @@ public:
 
 protected:
 
-  //File reading
-  bool Read();
 
   //Do reslicing etc.
   bool Scale();
@@ -126,6 +127,12 @@ void SignaMRAC2MU::SetParams(nlohmann::json params){
 
 //Run pipeline
 bool SignaMRAC2MU::Update(){
+
+  if (!Read()){
+    LOG(ERROR) << "Reading failed!!";
+    return false;
+  }
+
   if (_isHead)
     return ScaleAndResliceHead();
 
@@ -238,8 +245,8 @@ bool SignaMRAC2MU::Read(){
   std::stringstream ss;
 
   ss << "!INTERFILE:=" << std::endl;
-  ss << "%comment:=created with nm_mrac2mu for mMR data" << std::endl;
-  ss << "!originating system:=2008" << std::endl;
+  ss << "%comment:=created with signa for GE Signa" << std::endl;
+  ss << "!originating system:=SIGNA PET/MR" << std::endl;
 
   ss << std::endl << "!GENERAL DATA:=" << std::endl;
   ss << "!name of data file:=<%%DATAFILE%%>";
@@ -325,7 +332,7 @@ bool SignaMRAC2MU::UpdateInterfile(const std::string &key, const boost::any info
       bStatus=true;
     }
     catch (boost::bad_any_cast &e) {
-      
+
     }
   }
 
@@ -335,7 +342,7 @@ bool SignaMRAC2MU::UpdateInterfile(const std::string &key, const boost::any info
       bStatus=true;
     }
     catch (boost::bad_any_cast &e) {
-      
+
     }
   }
 
@@ -351,7 +358,7 @@ bool SignaMRAC2MU::UpdateInterfile(const std::string &key, const boost::any info
 
   if (n == std::string::npos){
     LOG(WARNING) << "Interfile replacement key: " << target << " not found!";
-    return false; 
+    return false;
   }
 
   _header.replace(n,target.length(),updateStr);

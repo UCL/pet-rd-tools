@@ -126,6 +126,7 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
+
   if (mrac->Update()){
     LOG(INFO) << "Scaling complete";
   } else {

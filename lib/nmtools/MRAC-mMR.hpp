@@ -61,6 +61,12 @@ protected:
 
 //Run pipeline
 bool MMRMRAC::Update(){
+
+  if (!Read()){
+    LOG(ERROR) << "Reading failed!!";
+    return false;
+  }
+
   if (_isHead) {
     LOG(INFO) << "Performing requested mMR head reslicing.";
     return ScaleAndResliceHead();
