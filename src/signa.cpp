@@ -1,5 +1,5 @@
 /*
-   NMmrac2mu.cpp
+   signa.cpp
 
    Author:      Benjamin A. Thomas
 
@@ -16,7 +16,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-   This program generates a mu-map from Siemens mMR MRAC for PET reconstruction.
+   This program generates a mu-map from MRAC or GE Signa for PET reconstruction.
  */
 
 #include <gdcmReader.h>
@@ -25,13 +25,13 @@
 #include <glog/logging.h>
 #include <memory>
 
-#include "nmtools/MRAC-mMR.hpp"
+#include "nmtools/MRAC-Signa.hpp"
 #include "EnvironmentInfo.h"
 
 int main(int argc, char **argv)
 {
 
-  const char* APP_NAME = "nm_mrac2mu";
+  const char* APP_NAME = "signa";
 
   std::string inputDirPath;
   std::string outputFilePath = "";
@@ -50,7 +50,6 @@ int main(int argc, char **argv)
     ("input,i", po::value<std::string>(&inputDirPath)->required(), "Input directory")
     ("output,o", po::value<std::string>(&outputFilePath)->required(), "Output file")
     ("orient", po::value<std::string>(&coordOrientation), "Output orientation: e.g. RAI or LPS (default = RAI)")
-    ("head", "Output mu-map for mMR brain")
     ("log,l", "Write log file");
 
   //Evaluate command line options
@@ -118,24 +117,15 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  std::unique_ptr<nm::MMRMRAC> mrac;
+  std::unique_ptr<nm::SignaMRAC2MU> mrac;
 
   try {
-    mrac.reset(new nm::MMRMRAC(srcPath, coordOrientation));
+    mrac.reset(new nm::SignaMRAC2MU(srcPath, coordOrientation));
   } catch (bool){
     LOG(ERROR) << "Failed to create MRAC converter!";
     return EXIT_FAILURE;
   }
 
-  if (vm.count("head")){
-    mrac->SetIsHead(true);
-
-    std::string str = coordOrientation;
-    std::transform(str.begin(), str.end(),str.begin(), ::toupper);
-    if (str != "RAS"){
-        LOG(WARNING) << "You may want to use RAS for --head.";
-    }
-  }
 
   if (mrac->Update()){
     LOG(INFO) << "Scaling complete";

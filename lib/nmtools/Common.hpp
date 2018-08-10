@@ -23,6 +23,8 @@
 #ifndef COMMON_HPP
 #define COMMON_HPP
 
+#include <itkImage.h>
+
 namespace nmtools {
 
 #ifdef __APPLE__
@@ -133,6 +135,84 @@ FileType GetFileType( boost::filesystem::path src){
   }
 
   return foundFileType;
+}
+
+itk::SpatialOrientation::CoordinateTerms GetOrientationCode(char &c){
+
+  c = toupper(c);
+
+  const std::string validVals = "RLPAIS";
+
+  if (validVals.find(c) == std::string::npos){
+    LOG(ERROR) << c << " is not a valid orientation code value!";
+    return itk::SpatialOrientation::ITK_COORDINATE_UNKNOWN;
+  }
+
+  if (c == 'R')
+    return itk::SpatialOrientation::ITK_COORDINATE_Right;
+
+  if (c == 'L')
+    return itk::SpatialOrientation::ITK_COORDINATE_Left;
+
+  if (c == 'P')
+    return itk::SpatialOrientation::ITK_COORDINATE_Posterior;
+
+  if (c == 'A')
+    return itk::SpatialOrientation::ITK_COORDINATE_Anterior;
+
+  if (c == 'I')
+    return itk::SpatialOrientation::ITK_COORDINATE_Inferior;
+
+  if (c == 'S')
+    return itk::SpatialOrientation::ITK_COORDINATE_Superior;
+
+  return itk::SpatialOrientation::ITK_COORDINATE_UNKNOWN;
+
+}
+
+bool SetDesiredCoordinateOrientation(const std::string &target,
+                                     itk::SpatialOrientation::ValidCoordinateOrientationFlags &finalOrientation){
+
+  std::vector<int> coordVals(3);
+
+  std::string orient = target;
+  //Check we have three letter code.
+  if (orient.size() != 3){
+    LOG(ERROR) << "Expected three letter orientation code. Read: " << orient;
+    return false;
+  }
+
+  //Check they are all valid identifiers
+  for (int i = 0; i < 3; i++) {
+    coordVals[i] = GetOrientationCode(orient[i]);
+    if (coordVals[i] == 0){
+      LOG(ERROR) << "Unknown coordinate: " << orient[i];
+      return false;
+    }
+  }
+
+  //See itkSpatialOrientation.h
+  itk::SpatialOrientation::ValidCoordinateOrientationFlags o =
+      (itk::SpatialOrientation::ValidCoordinateOrientationFlags)(
+          ( coordVals[0] << itk::SpatialOrientation::ITK_COORDINATE_PrimaryMinor ) +
+          ( coordVals[1] << itk::SpatialOrientation::ITK_COORDINATE_SecondaryMinor ) +
+          ( coordVals[2] << itk::SpatialOrientation::ITK_COORDINATE_TertiaryMinor ));
+
+  //Check we don't have an duplicates.
+  std::sort(coordVals.begin(), coordVals.end());
+  auto last = std::unique(coordVals.begin(), coordVals.end());
+  coordVals.erase(last, coordVals.end());
+
+  if (coordVals.size() != 3){
+    LOG(ERROR) << "Duplicate coordinate codes found: " << orient;
+    return false;
+  }
+
+  LOG(INFO) << "Using orientation code: " << orient;
+  finalOrientation = o;
+
+  return true;
+
 }
 
 }
