@@ -61,7 +61,7 @@ where `<DICOM file>` is the input file for extraction, `<OUTPUTDIR>` is the targ
 
 ### `nm_mrac2mu`
 
-`nm_mrac2mu` extracts the patient mu-map from the DICOM data, scales to linear attenuation coefficients (LACs) and reslices into a full-size matrix (344 x 344 x 127) for PET reconstruction. The mu-map is oriented in LPS. 
+`nm_mrac2mu` extracts the patient mu-map from mMR MRAC DICOM data, scales to linear attenuation coefficients (LACs) and reslices into a full-size matrix (344 x 344 x 127) for PET reconstruction. The mu-map is oriented in LPS. 
 
 #### Usage: 
 
@@ -69,7 +69,24 @@ where `<DICOM file>` is the input file for extraction, `<OUTPUTDIR>` is the targ
 nm_mrac2mu -i <DICOMDIR> -o <OUTPUT file> [--orient <ORIENTATION> --head]
 ```
 
-where `<DICOMDIR>` is the path to the MRAC DICOM folder and `<OUTPUT file>` is the destination file. `<ORIENTATION>` is the desired coordinate orientation (default 'RAS'). The switch `--head` will generate a mu-map in 344x344x127 matrix and is currently hard-coded for the mMR brain MRAC.
+where `<DICOMDIR>` is the path to the MRAC DICOM folder and `<OUTPUT file>` is the destination file. `<ORIENTATION>` is the desired coordinate orientation (default 'RAI'). The switch `--head` will generate a mu-map in 344x344x127 matrix and is currently hard-coded for the mMR brain MRAC.
+
+#### Output extensions
+
+- The output file type is determined by the extension of the destination file. To produce a compressed NiFTi file, specify the extension `.nii.gz` e.g. `myoutput.nii.gz`. 
+- If the extension `.hv` is given, an Interfile header is generated in addition to the volume.
+
+### `nm_signa2mu`
+
+`nm_signa2mu` extracts the patient mu-map from the GE Signa mMR DICOM data, scales to linear attenuation coefficients (LACs) and writes to an output file.
+
+#### Usage: 
+
+```bash
+nm_signa2mu -i <DICOMDIR> -o <OUTPUT file> [--orient <ORIENTATION>]
+```
+
+where `<DICOMDIR>` is the path to the MRAC DICOM folder and `<OUTPUT file>` is the destination file. `<ORIENTATION>` is the desired coordinate orientation (default 'RAI'). 
 
 #### Output extensions
 
