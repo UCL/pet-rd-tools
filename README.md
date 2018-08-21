@@ -4,7 +4,7 @@
 
 Command line tools for PET-MR (pre)-processing.
 
-Tools for validating and extracting raw PET data, and associated files, for the purposes of image reconstruction via [STIR](https://github.com/UCL/STIR) and [SIRF](https://github.com/CCPPETMR/SIRF). Currently these tools are specifically for the [Siemens mMR system](https://www.healthcare.siemens.com/magnetic-resonance-imaging/mr-pet-scanner/biograph-mmr) although will likely expand in the future.
+Tools for validating and extracting raw PET data, and associated files, for the purposes of image reconstruction via [STIR](https://github.com/UCL/STIR) and [SIRF](https://github.com/CCPPETMR/SIRF). Currently these tools are mainly for the [Siemens mMR system](https://www.healthcare.siemens.com/magnetic-resonance-imaging/mr-pet-scanner/biograph-mmr) although [GE Signa PET/MR](http://www3.gehealthcare.com/en/products/categories/magnetic_resonance_imaging/3-0t/signa_pet-mr) support is under development.
 
 ## Requirements for building
 
