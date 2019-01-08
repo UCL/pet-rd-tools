@@ -44,6 +44,6 @@ before_script:
 - cmake ${ITK_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF
   -DBUILD_TESTING=OFF -DModule_ITKReview=ON
 - make --jobs=$NUM_THREADS --keep-going
-- cd /home/travis/build/UCL/petmr-rd-tools
+- cd /home/travis/build/UCL/pet-rd-tools
 - cmake . -DCMAKE_BUILD_TYPE=Release -DITK_DIR=${ITK_BUILD_DIR} -Dglog_DIR=${GLOG_BUILD_DIR}
 script: cmake --build .
