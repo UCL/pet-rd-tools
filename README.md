@@ -1,6 +1,7 @@
 # pet-rd-tools
 
-[![Build Status](https://travis-ci.org/UCL/petmr-rd-tools.svg?branch=master)](https://travis-ci.org/UCL/petmr-rd-tools) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/d71cdf9cba3d4f9f9f973f371624bfe7)](https://www.codacy.com/app/bathomas/petmr-rd-tools?utm_source=github.com&utm_medium=referral&utm_content=UCL/petmr-rd-tools&utm_campaign=badger) [![DOI](https://zenodo.org/badge/113209519.svg)](https://zenodo.org/badge/latestdoi/113209519)
+[![Build Status](https://travis-ci.org/UCL/pet-rd-tools.svg?branch=master)](https://travis-ci.org/UCL/pet-rd-tools)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d71cdf9cba3d4f9f9f973f371624bfe7)](https://www.codacy.com/app/bathomas/petmr-rd-tools?utm_source=github.com&utm_medium=referral&utm_content=UCL/petmr-rd-tools&utm_campaign=badger) [![DOI](https://zenodo.org/badge/113209519.svg)](https://zenodo.org/badge/latestdoi/113209519)
 
 
 
