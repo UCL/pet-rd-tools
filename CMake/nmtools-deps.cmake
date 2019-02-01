@@ -15,5 +15,8 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
+if (NOT ITKReview_LOADED)
+	message(FATAL_ERROR "ITK should be built with the Module_ITKReview enabled.")
+endif()
 
 find_package(glog REQUIRED)
