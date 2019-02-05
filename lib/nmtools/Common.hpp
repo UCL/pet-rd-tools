@@ -24,6 +24,7 @@
 #define COMMON_HPP
 
 #include <itkImage.h>
+#include <gdcmStringFilter.h>
 
 namespace nmtools {
 
@@ -41,9 +42,9 @@ enum class ContentType { EHEADER, ERAWDATA };
 enum class FileType { EMMRSINO, EMMRLIST, EMMRNORM, EUNKNOWN, EERROR };
 enum class FileStatusCode { EGOOD, EBAD, EIOERROR };
 
-bool GetTagInfo(const gdcm::DataSet &ds, const gdcm::Tag tag, std::string &dst){
+bool GetTagInfo(const gdcm::File &file, const gdcm::Tag tag, std::string &dst){
 
-  //Extracts information for a given DICOM tag from a gdcm dataset.
+  //Extracts information for a given DICOM tag from a gdcm file.
   //Tag contents are returned as a string in dst variable.
 
   //TODO: Do actual check for valid content.
@@ -51,19 +52,40 @@ bool GetTagInfo(const gdcm::DataSet &ds, const gdcm::Tag tag, std::string &dst){
   //Tries to read the element associated with the tag. If the read fails, the
   //DataElement should have a ByteValue of NULL.
 
+  std::stringstream inStream;
+  
+  const gdcm::DataSet &ds = file.GetDataSet();
+  gdcm::DataElement element = ds.GetDataElement(tag);
+
+  dst = "";
+
   try {
-    std::stringstream inStream;
-    inStream.exceptions(std::ios::badbit);
-    const gdcm::DataElement& element = ds.GetDataElement(tag);
+
+    gdcm::StringFilter sf;
+    sf.SetFile(file);
+
     if (element.GetByteValue() != NULL) {
-      inStream << std::fixed << element.GetValue();
-      dst = inStream.str();
+      dst = sf.ToString(tag);
     }
-    else return false;
+    //else return false;
 
   } catch (std::bad_alloc){
     LOG(ERROR) << "GetTagInfo : Cannot read!";
     return false;
+  }
+
+  if (dst.size() == 0){
+    LOG(WARNING) << "GetTagInfo : Empty field - " << tag;
+    LOG(WARNING) << "Reverting to using element.GetValue()";
+    inStream << std::fixed << element.GetValue();
+    std::string tmpDst = inStream.str();
+
+    std::string smatch = "Loaded:";
+
+    if (tmpDst.compare(0, smatch.length(), smatch ) != 0){
+      LOG(INFO) << "Value found via element.GetValue()";
+      dst = tmpDst;
+    }
   }
 
   return true;
@@ -89,12 +111,13 @@ FileType GetFileType( boost::filesystem::path src){
   }
 
   //Get dataset via GDCM
-  const gdcm::DataSet &ds = dicomReader->GetFile().GetDataSet();
+  const gdcm::File &file = dicomReader->GetFile();
+  //const gdcm::DataSet &ds = dicomReader->GetFile().GetDataSet();
 
   //Read manufacturer name.
   const gdcm::Tag manufacturer(0x008, 0x0070);
   std::string manufacturerName;
-  if (!GetTagInfo(ds,manufacturer,manufacturerName)){
+  if (!GetTagInfo(file,manufacturer,manufacturerName)){
     LOG(ERROR) << "Unable to manufacturer name";
     return FileType::EERROR;  
   }
@@ -104,7 +127,7 @@ FileType GetFileType( boost::filesystem::path src){
   //Read model of scanner
   const gdcm::Tag model(0x008, 0x1090);
   std::string modelName;
-  if (!GetTagInfo(ds,model,modelName)){
+  if (!GetTagInfo(file,model,modelName)){
     LOG(ERROR) << "Unable to scanner model name";
     return FileType::EERROR;  
   }
@@ -113,7 +136,7 @@ FileType GetFileType( boost::filesystem::path src){
   //Get image tpye description
   const gdcm::Tag imageType(0x0008, 0x0008);
   std::string imageTypeValue;
-  if (!GetTagInfo(ds,imageType,imageTypeValue)){
+  if (!GetTagInfo(file,imageType,imageTypeValue)){
     LOG(ERROR) << "Unable to image type!";
     return FileType::EERROR;  
   }
