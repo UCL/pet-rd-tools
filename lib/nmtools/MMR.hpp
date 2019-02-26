@@ -174,21 +174,22 @@ bool IMMR::SetInputFile(boost::filesystem::path src){
 //Header extraction
 bool IMMR::ReadHeader() {
 
-  const gdcm::DataSet &ds = _dicomReader->GetFile().GetDataSet();
+  const gdcm::File &file = _dicomReader->GetFile();
 
   const gdcm::Tag headerTag(0x029, 0x1010);
 
   std::string headerString;
   std::string headerStringTmp;
 
-  if (!GetTagInfo(ds,headerTag,headerStringTmp)){
-    LOG(ERROR) << "Unable to header";
-    return false;  
+  if (!GetTagInfo(file,headerTag,headerStringTmp)){
+      LOG(WARNING) << "Unable to header from " << headerTag;
+    //return false;  
   }
+  
   //If this is actually a SMS-MI v 3.2 file then get header from 0029,1110.
-  if (headerStringTmp.find("SV10") != std::string::npos) {
+  if ( (headerStringTmp.find("SV10") != std::string::npos) || (headerStringTmp.size() == 0) ) {
     gdcm::Tag altHeaderTag(0x029, 0x1110);
-    if (!GetTagInfo(ds,altHeaderTag,headerString)){
+    if (!GetTagInfo(file,altHeaderTag,headerString)){
       LOG(ERROR) << "Unable to header (SV10)";
       return false;  
     }
@@ -210,22 +211,23 @@ bool IMMR::ExtractHeader( const boost::filesystem::path dst ){
 
   bool bStatus = false;
 
-  const gdcm::DataSet &ds = _dicomReader->GetFile().GetDataSet();
+  const gdcm::File &file = _dicomReader->GetFile();
+  //const gdcm::DataSet &ds = _dicomReader->GetFile().GetDataSet();
 
   const gdcm::Tag headerTag(0x029, 0x1010);
 
   std::string headerString;
   std::string headerStringTmp;
 
-  if (!GetTagInfo(ds,headerTag,headerStringTmp)){
-    LOG(ERROR) << "Unable to header";
+  if (!GetTagInfo(file,headerTag,headerStringTmp)){
+    LOG(ERROR) << "Unable to header from " << headerTag;
     return false;  
   }
   //If this is actually a SMS-MI v 3.2 file then get header from 0029,1110.
   if (headerStringTmp.find("SV10") != std::string::npos) {
     gdcm::Tag altHeaderTag(0x029, 0x1110);
-    if (!GetTagInfo(ds,altHeaderTag,headerString)){
-      LOG(ERROR) << "Unable to header (SV10)";
+    if (!GetTagInfo(file,altHeaderTag,headerString)){
+      LOG(ERROR) << "Unable to header (SV10) from " << altHeaderTag;
       return false;  
     }
   }
