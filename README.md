@@ -12,7 +12,7 @@ Tools for validating and extracting raw PET data, and associated files, for the 
 ## Requirements for building
 
 - CMake (>= 3.7)
-- ITK (>= 4.7)
+- ITK (>= 4.13.1)
 - Boost (>= 1.55)
 - GLOG ([https://github.com/google/glog](https://github.com/google/glog))
 
