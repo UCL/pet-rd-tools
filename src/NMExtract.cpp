@@ -130,7 +130,7 @@ int main(int argc, char **argv)
   //Create output directory.
   fs::path outDstDir = outputDirectory;
 
-  if (! vm.count("output")) {
+  if ( (!vm.count("output")) || (outDstDir.empty()) )  {
     outDstDir = srcPath.parent_path();
     LOG(INFO) << "No output directory specified. Placing output in same directory as input.";
   }
