@@ -28,7 +28,7 @@ before_script:
 - export GLOG_SOURCE_DIR=$HOME/glog
 - export GLOG_BUILD_DIR=$HOME/glog-build
 - cd $HOME
-- git clone --branch v035 https://github.com/google/glog.git
+- git clone --branch v0.3.5 https://github.com/google/glog.git
 - mkdir ${GLOG_BUILD_DIR}
 - cd ${GLOG_BUILD_DIR}
 - cmake ${GLOG_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release
