@@ -2,8 +2,9 @@
    Common.hpp
 
    Author:      Benjamin A. Thomas
+   Author:      Kris Thielemans
 
-   Copyright 2017 Institute of Nuclear Medicine, University College London.
+   Copyright 2017, 2020 Institute of Nuclear Medicine, University College London.
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -39,7 +40,6 @@ namespace nmtools {
 #endif
 
 enum class ContentType { EHEADER, ERAWDATA };
-enum class FileType { EMMRSINO, EMMRLIST, EMMRNORM, EUNKNOWN, EERROR };
 enum class FileStatusCode { EGOOD, EBAD, EIOERROR };
 
 bool GetTagInfo(const gdcm::File &file, const gdcm::Tag tag, std::string &dst){
@@ -91,23 +91,89 @@ bool GetTagInfo(const gdcm::File &file, const gdcm::Tag tag, std::string &dst){
   return true;
 }
 
-FileType GetFileType( boost::filesystem::path src){
+class IDicomExtractor {
 
-  //Extracts information via DICOM to determine what kind of mMR
-  //raw data type we're dealing with.
-  //
-  //Will check for list mode, sinograms and norms.
-  //
-  //TODO: Support physio files? (11/12/2017)
+//Base class for extracting headers etc from a (probably DICOM) file
+public:
 
-  FileType foundFileType = FileType::EUNKNOWN;
+  IDicomExtractor();
+  explicit IDicomExtractor(boost::filesystem::path src);
 
-  std::unique_ptr<gdcm::Reader> dicomReader(new gdcm::Reader);
-  dicomReader->SetFileName(src.string().c_str());
+  virtual bool SetInputFile ( boost::filesystem::path src );
+  //FileType GetFileType( boost::filesystem::path src );
+
+  virtual bool IsValid()=0;
+
+  virtual bool ExtractHeader( const boost::filesystem::path dst ) = 0;
+  virtual bool ExtractData( const boost::filesystem::path dst ) = 0;
+  virtual boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype) = 0;
+  virtual bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile) = 0;
+
+  virtual ~IDicomExtractor(){};
+
+protected:
+  std::unique_ptr<gdcm::Reader> _dicomReader = nullptr;
+
+  boost::filesystem::path _srcPath;
+
+};
+
+IDicomExtractor::IDicomExtractor() {
+    std::unique_ptr<gdcm::Reader> dcm(new gdcm::Reader);
+  _dicomReader = std::move(dcm);
+}
+
+//Constructor with path.
+IDicomExtractor::IDicomExtractor(boost::filesystem::path src){
+
+  std::unique_ptr<gdcm::Reader> dcm(new gdcm::Reader);
+  _dicomReader = std::move(dcm);
+
+  if (! this->SetInputFile(src) ) {
+    LOG(ERROR) << "Unable to read data in: " << src;
+  }
+
+}
+
+//On set input, try and read.
+bool IDicomExtractor::SetInputFile(boost::filesystem::path src){
+
+    _dicomReader->SetFileName(src.string().c_str());
+
+    if (!_dicomReader->Read()) {
+        LOG(ERROR) << "Unable to read as DICOM file";
+        return false;
+    }
+
+    _srcPath = src;
+
+    return true;
+}
+
+class IRawDataFactory {
+//Factory that returns suitable child for given data.
+
+public:
+  virtual std::unique_ptr<IDicomExtractor> Create( boost::filesystem::path inFile )
+  {
+    return std::unique_ptr<IDicomExtractor>(Create_ptr( inFile ));
+  }
+protected:
+  std::unique_ptr<gdcm::Reader> dicomReader;
+  std::string manufacturerName;
+  std::string modelName;
+
+  bool Open(boost::filesystem::path inFile);
+  virtual IDicomExtractor* Create_ptr( boost::filesystem::path inFile ) = 0;
+};
+
+bool IRawDataFactory::Open(boost::filesystem::path inFile) {
+  dicomReader = std::unique_ptr<gdcm::Reader>(new gdcm::Reader);
+  dicomReader->SetFileName(inFile.string().c_str());
 
   if (!dicomReader->Read()) {
-    LOG(ERROR) << "Unable to read as DICOM file";
-    return FileType::EERROR;
+    LOG(ERROR) << "Unable to read '" << inFile.string() << "' as DICOM file";
+    return false;
   }
 
   //Get dataset via GDCM
@@ -116,48 +182,22 @@ FileType GetFileType( boost::filesystem::path src){
 
   //Read manufacturer name.
   const gdcm::Tag manufacturer(0x008, 0x0070);
-  std::string manufacturerName;
   if (!GetTagInfo(file,manufacturer,manufacturerName)){
     LOG(ERROR) << "Unable to manufacturer name";
-    return FileType::EERROR;  
+    return false;
   }
 
   LOG(INFO) << "Manufacturer: " << manufacturerName;
 
   //Read model of scanner
   const gdcm::Tag model(0x008, 0x1090);
-  std::string modelName;
   if (!GetTagInfo(file,model,modelName)){
     LOG(ERROR) << "Unable to scanner model name";
-    return FileType::EERROR;  
+    return false;
   }
   LOG(INFO) << "Model name: " << modelName;
 
-  //Get image tpye description
-  const gdcm::Tag imageType(0x0008, 0x0008);
-  std::string imageTypeValue;
-  if (!GetTagInfo(file,imageType,imageTypeValue)){
-    LOG(ERROR) << "Unable to image type!";
-    return FileType::EERROR;  
-  }
-  LOG(INFO) << "Image type: " << imageTypeValue;
-
-  if (manufacturerName.find("SIEMENS") != std::string::npos) {
-    DLOG(INFO) << "Manufacturer = SIEMENS";
-
-    if (modelName.find("Biograph_mMR") != std::string::npos) {
-      DLOG(INFO) << "Scanner = MMR";
-
-      if (imageTypeValue.find("ORIGINAL\\PRIMARY\\PET_LISTMODE") != std::string::npos)
-        foundFileType = FileType::EMMRLIST;
-      if (imageTypeValue.find("ORIGINAL\\PRIMARY\\PET_EM_SINO") != std::string::npos)
-        foundFileType = FileType::EMMRSINO;
-      if (imageTypeValue.find("ORIGINAL\\PRIMARY\\PET_NORM") != std::string::npos)
-        foundFileType = FileType::EMMRNORM;
-    }
-  }
-
-  return foundFileType;
+  return true;
 }
 
 itk::SpatialOrientation::CoordinateTerms GetOrientationCode(char &c){

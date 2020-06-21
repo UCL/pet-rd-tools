@@ -2,8 +2,9 @@
    MMR.hpp
 
    Author:      Benjamin A. Thomas
+   Author:      Kris Thielemans
 
-   Copyright 2017 Institute of Nuclear Medicine, University College London.
+   Copyright 2017, 2020 Institute of Nuclear Medicine, University College London.
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -34,22 +35,16 @@
 
 namespace nmtools {
 
-class IMMR {
+class IMMR: public IDicomExtractor {
 
 //Base class for mMR. Splits Interfile header and raw data
 public:
 
-  IMMR();
   explicit IMMR(boost::filesystem::path src);
 
-  bool SetInputFile ( boost::filesystem::path src );
-  FileType GetFileType( boost::filesystem::path src );
-
-  virtual bool IsValid()=0;
+    //FileType GetFileType( boost::filesystem::path src );
 
   virtual bool ExtractHeader( const boost::filesystem::path dst );
-  virtual bool ExtractData( const boost::filesystem::path dst )=0;
-  virtual boost::filesystem::path GetStdFileName( boost::filesystem::path srcFile, ContentType ctype) = 0;
   bool ModifyHeader( const boost::filesystem::path src, const boost::filesystem::path dataFile);
   //Deal with EOF in norm header.
   std::string CleanUpLineEncoding( std::string );
@@ -105,31 +100,69 @@ public:
 protected:
 };
 
-class IRawDataFactory {
-//Factory that returns suitable child for given data.
-
+class SiemensPETFactory : public IRawDataFactory{
 public:
-  virtual std::unique_ptr<IMMR> Create( boost::filesystem::path inFile )=0;
-};
+  enum class FileType { EMMRSINO, EMMRLIST, EMMRNORM,
+                        EUNKNOWN, EERROR };
 
-class MMRFactory : public IRawDataFactory{
-public:
-  std::unique_ptr<IMMR> Create( boost::filesystem::path inFile ){
+  FileType GetFileType( boost::filesystem::path src){
+
+    //Extracts information via DICOM to determine what kind of mMR
+    //raw data type we're dealing with.
+    //
+    //Will check for list mode, sinograms and norms.
+    //
+    //TODO: Support physio files? (11/12/2017)
+
+    FileType foundFileType = FileType::EUNKNOWN;
+
+    if (!Open(src)) {
+      return FileType::EERROR;
+    }
+
+    const gdcm::File &file = dicomReader->GetFile();
+
+    if (manufacturerName.find("SIEMENS") != std::string::npos) {
+      DLOG(INFO) << "Manufacturer = SIEMENS";
+
+      //Get image tpye description
+      const gdcm::Tag imageType(0x0008, 0x0008);
+      std::string imageTypeValue;
+      if (!GetTagInfo(file,imageType,imageTypeValue)){
+        LOG(ERROR) << "Unable to image type!";
+        return FileType::EERROR;  
+      }
+      LOG(INFO) << "Image type: " << imageTypeValue;
+
+      if (modelName.find("Biograph_mMR") != std::string::npos) {
+        DLOG(INFO) << "Scanner = MMR";
+
+        if (imageTypeValue.find("ORIGINAL\\PRIMARY\\PET_LISTMODE") != std::string::npos)
+          foundFileType = FileType::EMMRLIST;
+        if (imageTypeValue.find("ORIGINAL\\PRIMARY\\PET_EM_SINO") != std::string::npos)
+          foundFileType = FileType::EMMRSINO;
+        if (imageTypeValue.find("ORIGINAL\\PRIMARY\\PET_NORM") != std::string::npos)
+          foundFileType = FileType::EMMRNORM;
+      }
+    }
+  }  
+private:
+  IMMR* Create_ptr( boost::filesystem::path inFile ) {
 
     FileType fType = GetFileType( inFile );
 
     if (fType == FileType::EMMRLIST){
-      std::unique_ptr<IMMR>instance(new MMR32BitList(inFile));
+      IMMR* instance(new MMR32BitList(inFile));
       return instance;
     }
 
     if (fType == FileType::EMMRSINO){
-      std::unique_ptr<IMMR> instance(new MMRSino(inFile)); 
+      IMMR* instance(new MMRSino(inFile)); 
       return instance;
     }
 
     if (fType == FileType::EMMRNORM){
-      std::unique_ptr<IMMR> instance(new MMRNorm(inFile));  
+      IMMR* instance(new MMRNorm(inFile));  
       return instance;    
     }
 
@@ -137,39 +170,10 @@ public:
   }
 };
 
-//Constructor
-IMMR::IMMR(){
-  std::unique_ptr<gdcm::Reader> dcm(new gdcm::Reader);
-  _dicomReader = std::move(dcm);
-
-}
-
 //Constructor with path.
-IMMR::IMMR(boost::filesystem::path src){
-
-  std::unique_ptr<gdcm::Reader> dcm(new gdcm::Reader);
-  _dicomReader = std::move(dcm);
-
-  if (! this->SetInputFile(src) ) {
-    LOG(ERROR) << "Unable to read mMR data in: " << src;
-  }
-
-}
-
-//On set input, try and read.
-bool IMMR::SetInputFile(boost::filesystem::path src){
-
-    _dicomReader->SetFileName(src.string().c_str());
-
-    if (!_dicomReader->Read()) {
-        LOG(ERROR) << "Unable to read as DICOM file";
-        return false;
-    }
-
-    _srcPath = src;
-
-    return true;
-}
+IMMR::IMMR(boost::filesystem::path src)
+  : IDicomExtractor(src)
+{}
 
 //Header extraction
 bool IMMR::ReadHeader() {

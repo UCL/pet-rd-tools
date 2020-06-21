@@ -7,7 +7,7 @@
 
 Command line tools for PET-MR (pre)-processing.
 
-Tools for validating and extracting raw PET data, and associated files, for the purposes of image reconstruction via [STIR](https://github.com/UCL/STIR) and [SIRF](https://github.com/CCPPETMR/SIRF). Currently these tools are mainly for the [Siemens mMR system](https://www.healthcare.siemens.com/magnetic-resonance-imaging/mr-pet-scanner/biograph-mmr) although [GE Signa PET/MR](http://www3.gehealthcare.com/en/products/categories/magnetic_resonance_imaging/3-0t/signa_pet-mr) support is under development.
+Tools for validating and extracting raw PET data, and associated files, for the purposes of image reconstruction via [STIR](https://github.com/UCL/STIR) and [SIRF](https://github.com/CCPPETMR/SIRF). Currently these tools are mainly for the [Siemens mMR system](https://www.healthcare.siemens.com/magnetic-resonance-imaging/mr-pet-scanner/biograph-mmr) and [GE Signa PET/MR](http://www3.gehealthcare.com/en/products/categories/magnetic_resonance_imaging/3-0t/signa_pet-mr), although other GE PET/CT scanners should work as well.
 
 ## Requirements for building
 
@@ -21,6 +21,9 @@ Tools for validating and extracting raw PET data, and associated files, for the 
 ### `nm_validate`
 
 The purpose of `nm_validate` is to confirm if a raw data file (or file pair) contains all the expected data.
+
+*WARNING*: This currently only performs additional checks on Siemens mMR data. For GE data, there are no
+checks on the content of the RDF.
 
 #### Usage:
 
@@ -47,20 +50,32 @@ I1205 17:15:41.942123 3333379008 NMValidate.cpp:140] Ended: Tue Dec  5 17:15:41 
 
 ### `nm_extract`
 
-Raw PET data from the mMR scanner can be in one of two forms: a single DICOM file or a pair of files (one DICOM header and a raw binary file). `nm_extract` reads the DICOM data and extracts the Interfile header and the raw data for either of the two forms. Once extracted, the Interfile header can be used for image reconstruction with STIR. 
+Raw PET data from the mMR scanner can be in one of two forms: a single DICOM file or a pair of files (one DICOM header and a raw binary file). `nm_extract` reads the DICOM data and extracts the Interfile header and the raw data for either of the two forms. Once extracted, the Interfile header can be used for image reconstruction with STIR.
+
+GE PET scanners also store the raw data in a single DICOM file. `nm_extract` reads this file and extracts the GE RDF (Raw Data Format)
+file. This can then be used in STIR.
 
 #### Usage:
 
 ```bash
 nm_extract -i <DICOM file> [-o <OUTPUTDIR> -p <PREFIX> --noupdate ]
 ```
-where `<DICOM file>` is the input file for extraction, `<OUTPUTDIR>` is the target output directory and `<PREFIX>` is the desired filename prefix for the output files. `--noupdate` will extract the raw Interfile without modification (mainly for debugging). If the `<OUTPUTDIR>` does not exist, `nm_validate` will attempt to create it. If `<OUTPUTDIR>` is not specified, the output will be written to the same directory as the input. 
+where `<DICOM file>` is the input file for extraction, `<OUTPUTDIR>` is the target output directory and `<PREFIX>` is the desired filename prefix for the output files. If the `<OUTPUTDIR>` does not exist, `nm_validate` will attempt to create it. If `<OUTPUTDIR>` is not specified, the output will be written to the same directory as the input.
+
+For Siemens data, `--noupdate` will extract the raw Interfile without modification (mainly for debugging). For GE data, this option is ignored.
+
 
 #### Output extensions
 
+Siemens data:
 - List mode files will be extracted with `.l` extensions for the list mode data and `.l.hdr` for the associated Interfile header.
 - Sinograms files will have the extension `.s` for the sinogram data and `.s.hdr` for the associated Interfile header.
 - Normalisation files will be extracted with `.n` and `.n.hdr` extensions.
+
+GE data:
+- List mode files will be extracted with `.BLF` extension.
+- Sinogram files will have `.sino.rdf` extension.
+- Norm and geometric norm files will have `.norm.rdf` and `.geo.rdf` extensions.
 
 ### `nm_mrac2mu`
 
