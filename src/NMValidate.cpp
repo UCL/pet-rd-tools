@@ -2,8 +2,9 @@
    NMValidate.cpp
 
    Author:      Benjamin A. Thomas
+   Author:      Kris Thielemans
 
-   Copyright 2017 Institute of Nuclear Medicine, University College London.
+   Copyright 2017, 2020 Institute of Nuclear Medicine, University College London.
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -25,6 +26,7 @@
 #include <glog/logging.h>
 
 #include "nmtools/MMR.hpp"
+#include "nmtools/GEPET.hpp"
 #include "EnvironmentInfo.h"
 
 int main(int argc, char **argv)
@@ -116,12 +118,24 @@ int main(int argc, char **argv)
   }
 
   //Try and read input file
-  std::unique_ptr<nm::MMRFactory> factory(new nm::MMRFactory);
-  std::unique_ptr<nm::IMMR> reader(factory->Create(srcPath));
+  std::unique_ptr<nm::IDicomExtractor> reader;
+  try {
+    std::unique_ptr<nm::SiemensPETFactory> Siemens_factory(new nm::SiemensPETFactory);
+    reader = Siemens_factory->Create(srcPath);
+  }
+  catch (...)
+  {
+    LOG(INFO) << "Not a Siemens file. Trying GE (only minimal checks will be performed though).";
+  }
+  
+  if (reader == nullptr){
+    std::unique_ptr<nm::GEPETFactory> GE_factory(new nm::GEPETFactory);
+    reader = GE_factory->Create(srcPath);
+  }
 
   //If no valid reader found, exit.
   if (reader == nullptr){
-    LOG(ERROR) << "File appears to be INVALID";
+    LOG(ERROR) << "File appears to be INVALID (not recognised)";
     return EXIT_FAILURE;
   }
 
