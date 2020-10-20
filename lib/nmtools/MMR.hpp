@@ -178,6 +178,11 @@ IMMR::IMMR(boost::filesystem::path src)
 //Header extraction
 bool IMMR::ReadHeader() {
 
+  if (!_dicomReader) {
+      LOG(ERROR) << "DICOM reader not initialised. Internal error.";
+      return false;
+  }
+
   const gdcm::File &file = _dicomReader->GetFile();
 
   const gdcm::Tag headerTag(0x029, 0x1010);
@@ -186,7 +191,7 @@ bool IMMR::ReadHeader() {
   std::string headerStringTmp;
 
   if (!GetTagInfo(file,headerTag,headerStringTmp)){
-      LOG(WARNING) << "Unable to header from " << headerTag;
+      LOG(WARNING) << "Unable to read header from " << headerTag;
     //return false;  
   }
   
@@ -194,7 +199,7 @@ bool IMMR::ReadHeader() {
   if ( (headerStringTmp.find("SV10") != std::string::npos) || (headerStringTmp.size() == 0) ) {
     gdcm::Tag altHeaderTag(0x029, 0x1110);
     if (!GetTagInfo(file,altHeaderTag,headerString)){
-      LOG(ERROR) << "Unable to header (SV10)";
+      LOG(ERROR) << "Unable to read header (SV10)";
       return false;  
     }
   }
