@@ -26,6 +26,7 @@
 
 #include <itkImage.h>
 #include <gdcmStringFilter.h>
+#include <exception>
 
 namespace nmtools {
 
@@ -131,6 +132,7 @@ IDicomExtractor::IDicomExtractor(boost::filesystem::path src){
 
   if (! this->SetInputFile(src) ) {
     LOG(ERROR) << "Unable to read data in: " << src;
+    throw std::invalid_argument("Unable to read \"" + src.string() + "\" as DICOM");
   }
 
 }
