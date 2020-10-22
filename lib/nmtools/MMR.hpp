@@ -56,10 +56,7 @@ protected:
   bool ReadHeader();
 
   FileStatusCode CheckForSiemensBFFile(boost::filesystem::path src, uint64_t numOfWords);
-  std::unique_ptr<gdcm::Reader> _dicomReader = nullptr;
   std::string _headerString;
-
-  boost::filesystem::path _srcPath;
 
 };
 
