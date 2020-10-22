@@ -180,7 +180,14 @@ int main(int argc, char **argv)
   fs::path dstPath = outDstDir;
   dstPath /= newDataFileName;
   LOG(INFO) << "Writing raw data to: " << dstPath;
-  reader->ExtractData(dstPath);
+  if (reader->ExtractData(dstPath)) {
+    LOG(INFO) << "Data written successfully.";
+  }
+  else {
+    LOG(ERROR) << "Data extraction failed!";
+    return EXIT_FAILURE;
+  }
+
   newDataFileName = dstPath;
 
   fs::path newHeaderFileName = reader->GetStdFileName(outFilePath,nm::ContentType::EHEADER);
