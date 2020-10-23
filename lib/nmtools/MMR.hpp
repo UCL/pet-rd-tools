@@ -142,6 +142,7 @@ public:
           foundFileType = FileType::EMMRNORM;
       }
     }
+    return foundFileType;
   }  
 private:
   IMMR* Create_ptr( boost::filesystem::path inFile ) {
