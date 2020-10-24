@@ -1,5 +1,8 @@
 # ChangeLog
 
+## v2.0.1
+* fix reading of Siemens data
+
 ## v2.0.0
 * add capability to extract GE PET raw data. Just use `nm_extract`
 * `nm_extract` write to input path by default
