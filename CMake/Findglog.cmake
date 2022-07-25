@@ -334,7 +334,7 @@ endif()
 
 # Handle REQUIRED / QUIET optional arguments.
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Glog DEFAULT_MSG
+find_package_handle_standard_args(glog DEFAULT_MSG
   ${GLOG_REQUIRED_VARIABLES})
 
 # Only mark internal variables as advanced if we found glog, otherwise
