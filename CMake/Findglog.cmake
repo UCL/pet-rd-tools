@@ -28,6 +28,10 @@
 #
 # Author: alexs.mac@gmail.com (Alex Stewart)
 #
+# Fixes by k.thielemans@ucl.ac.uk
+# Copyright 2022 University College London
+# - create glog::glog target if it doesn't exist yet
+# - adjust name from Glog to glog in call to find_package_handle_standard_args, as we're using findglog.cmake
 
 # FindGlog.cmake - Find Google glog logging library.
 #
@@ -322,6 +326,13 @@ if (GLOG_FOUND)
   set(GLOG_LIBRARIES ${GLOG_LIBRARY})
 endif (GLOG_FOUND)
 
+# Create glog::glog target if it doesn't exist yet
+if (NOT TARGET glog::glog)
+  add_library(glog::glog INTERFACE IMPORTED)
+  target_include_directories(glog::glog INTERFACE ${GLOG_INCLUDE_DIRS})
+  target_link_libraries(glog::glog INTERFACE ${GLOG_LIBRARIES})
+endif()
+
 # If we are using an exported CMake glog target, the include directories are
 # wrapped into the target itself, and do not have to be (and are not)
 # separately specified.  In which case, we should not add GLOG_INCLUDE_DIRS
@@ -334,7 +345,7 @@ endif()
 
 # Handle REQUIRED / QUIET optional arguments.
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Glog DEFAULT_MSG
+find_package_handle_standard_args(glog DEFAULT_MSG
   ${GLOG_REQUIRED_VARIABLES})
 
 # Only mark internal variables as advanced if we found glog, otherwise
