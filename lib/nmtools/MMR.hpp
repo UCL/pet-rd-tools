@@ -274,7 +274,7 @@ FileStatusCode IMMR::CheckForSiemensBFFile(boost::filesystem::path src, uint64_t
   FILE *inFile;
 
   boost::filesystem::path bfPath = src;
-  bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
+  bfPath.replace_extension(".bf");
 
   if (!(inFile = fopen(bfPath.string().c_str(), "rb"))) {
       LOG(INFO) << "Cannot open " << bfPath.native();
@@ -363,7 +363,7 @@ bool MMR32BitList::ExtractData( const boost::filesystem::path dst ){
     if ( bfStatus == FileStatusCode::EGOOD ) {
       
       boost::filesystem::path bfPath = _srcPath;
-      bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
+      bfPath.replace_extension(".bf").string();
       try {
         if (boost::filesystem::exists(dst)) {
           LOG(ERROR) << "The .bf file already exists!";
@@ -497,12 +497,12 @@ bool MMRSino::ExtractData( const boost::filesystem::path dst ){
   }
 
   boost::filesystem::path bfPath = _srcPath;
-  bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
+  bfPath.replace_extension(".bf");
 
   if ( boost::filesystem::exists(bfPath) ){
 
     boost::filesystem::path bfPath = _srcPath;
-    bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
+    bfPath.replace_extension(".bf").string();
     try {
       boost::filesystem::copy(bfPath, dst);
       bStatus = true;
@@ -554,7 +554,7 @@ bool MMRSino::IsValid(){
   DLOG(INFO) << "SRC: " << this->_srcPath;
 
   boost::filesystem::path bfPath = _srcPath;
-  bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
+  bfPath.replace_extension(".bf").string();
 
   if ( boost::filesystem::exists(bfPath) ){
     LOG(INFO) << ".bf file exists.";
@@ -609,7 +609,7 @@ bool MMRNorm::ExtractData( const boost::filesystem::path dst ){
     if ( bfStatus == FileStatusCode::EGOOD ) {
 
       boost::filesystem::path bfPath = _srcPath;
-      bfPath = boost::filesystem::change_extension(bfPath, ".bf").string();
+      bfPath.replace_extension(".bf").string();
       try {
         boost::filesystem::copy(bfPath, dst);
         bStatus = true;

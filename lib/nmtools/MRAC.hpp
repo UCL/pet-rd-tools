@@ -578,7 +578,8 @@ bool MRAC2MU::Write(boost::filesystem::path dst) {
 //Write Interfile header and image pair to disk.
 bool MRAC2MU::WriteToInterFile(boost::filesystem::path dst){
 
-  boost::filesystem::path altPath = boost::filesystem::change_extension(dst, ".mhd");
+  boost::filesystem::path altPath = dst;
+  altPath.replace_extension(".mhd");
   //Write output file
   typedef typename itk::ImageFileWriter<MuMapImageType> WriterType; 
 
@@ -600,7 +601,8 @@ bool MRAC2MU::WriteToInterFile(boost::filesystem::path dst){
 
   std::string outputHeader = GetInterfileHdr();
 
-  altPath = boost::filesystem::change_extension(dst, ".hv");
+  altPath = dst;
+  altPath.replace_extension(".hv");
 
   std::ofstream infoStream;
 
