@@ -164,6 +164,9 @@ private:
       return instance;    
     }
 
+    if (fType == FileType::EUNKNOWN){
+      LOG(ERROR) << "Unsupported file type (only handling list/sino/norm)";
+    }
     return nullptr;
   }
 };
