@@ -81,7 +81,7 @@ int main(int argc, char **argv)
   }
 
   //Configure logging
-  fs::path log_path = fs::complete(fs::current_path());
+  fs::path log_path = fs::absolute(fs::current_path());
   log_path /= APP_NAME;
   log_path += "-";
 

@@ -27,6 +27,7 @@
 #include <itkImage.h>
 #include <gdcmStringFilter.h>
 #include <exception>
+#include <sstream>
 
 namespace nmtools {
 
@@ -249,7 +250,7 @@ bool SetDesiredCoordinateOrientation(const std::string &target,
 
   //Check they are all valid identifiers
   for (int i = 0; i < 3; i++) {
-    coordVals[i] = GetOrientationCode(orient[i]);
+    coordVals[i] = static_cast<int>(GetOrientationCode(orient[i]));
     if (coordVals[i] == 0){
       LOG(ERROR) << "Unknown coordinate: " << orient[i];
       return false;
@@ -259,9 +260,9 @@ bool SetDesiredCoordinateOrientation(const std::string &target,
   //See itkSpatialOrientation.h
   itk::SpatialOrientation::ValidCoordinateOrientationFlags o =
       (itk::SpatialOrientation::ValidCoordinateOrientationFlags)(
-          ( coordVals[0] << itk::SpatialOrientation::ITK_COORDINATE_PrimaryMinor ) +
-          ( coordVals[1] << itk::SpatialOrientation::ITK_COORDINATE_SecondaryMinor ) +
-          ( coordVals[2] << itk::SpatialOrientation::ITK_COORDINATE_TertiaryMinor ));
+          ( coordVals[0] << static_cast<int>(itk::SpatialOrientation::ITK_COORDINATE_PrimaryMinor )) +
+          ( coordVals[1] << static_cast<int>(itk::SpatialOrientation::ITK_COORDINATE_SecondaryMinor )) +
+          ( coordVals[2] << static_cast<int>(itk::SpatialOrientation::ITK_COORDINATE_TertiaryMinor )));
 
   //Check we don't have an duplicates.
   std::sort(coordVals.begin(), coordVals.end());
