@@ -20,7 +20,6 @@
    This program extracts raw mMR data.
  */
 
-#include <gdcmReader.h>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <glog/logging.h>
