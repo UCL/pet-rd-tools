@@ -25,6 +25,7 @@
 #define COMMON_HPP
 
 #include <itkImage.h>
+#include <gdcmReader.h>
 #include <gdcmStringFilter.h>
 #include <exception>
 #include <sstream>

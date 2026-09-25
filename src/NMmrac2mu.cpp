@@ -19,7 +19,6 @@
    This program generates a mu-map from Siemens mMR MRAC for PET reconstruction.
  */
 
-#include <gdcmReader.h>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <glog/logging.h>

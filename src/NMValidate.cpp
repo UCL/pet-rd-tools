@@ -20,7 +20,6 @@
    This program confirms the validity of mMR raw data files.
  */
 
-#include <gdcmReader.h>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <glog/logging.h>
