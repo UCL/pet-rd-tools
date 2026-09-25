@@ -92,7 +92,7 @@ int main(int argc, char **argv)
   }
 
   google::InitGoogleLogging(argv[0]);
-  google::SetLogDestination(google::INFO, log_path.string().c_str());
+  google::SetLogDestination(google::GLOG_INFO, log_path.string().c_str());
 
   std::time_t startTime = std::time( 0 ) ;
 
