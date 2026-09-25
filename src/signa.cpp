@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 
   //Check if the input is a file.
   if (!fs::is_directory(srcPath)) {
-    LOG(ERROR) << srcPath.native() << " does not appear to be a  directory!";
+    LOG(ERROR) << srcPath.string() << " does not appear to be a  directory!";
     return EXIT_FAILURE;
   }
 

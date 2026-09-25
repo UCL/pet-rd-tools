@@ -112,7 +112,7 @@ int main(int argc, char **argv)
   //Check if it is a file.
   if (! fs::is_regular_file( srcPath ) )
   {
-    LOG(ERROR) << srcPath.native() << " does not appear to be a file!";
+    LOG(ERROR) << srcPath.string() << " does not appear to be a file!";
     return EXIT_FAILURE;
   }
 
