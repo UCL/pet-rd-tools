@@ -180,7 +180,7 @@ bool MRAC2MU::SetInput(boost::filesystem::path src){
 
   //Check if the input is a file.
   if (!boost::filesystem::is_directory(src)) {
-    LOG(ERROR) << src.native() << " does not appear to be a  directory!";
+    LOG(ERROR) << src.string() << " does not appear to be a  directory!";
     return false;
   }
 

@@ -1,6 +1,18 @@
 # ChangeLog
 
+## v2.1.0
+
+* fix win build: `path::string()`, `google::GLOG_INFO`
+
+## v2.0.2
+
+* more Siemens debug info
+* fix ITK enum change
+* remove deprecated Boost functions
+* CMake `glog` fixes
+
 ## v2.0.1
+
 * fix reading of Siemens data
 
 ## v2.0.0
@@ -14,4 +26,5 @@
 * `nm_mrac2mu`: adjust x-y padding (with --head) to meet default size.
 
 ## v1.0.0
+
 * Support Siemens mMR

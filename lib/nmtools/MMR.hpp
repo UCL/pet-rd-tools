@@ -280,7 +280,7 @@ FileStatusCode IMMR::CheckForSiemensBFFile(boost::filesystem::path src, uint64_t
   bfPath.replace_extension(".bf");
 
   if (!(inFile = fopen(bfPath.string().c_str(), "rb"))) {
-      LOG(INFO) << "Cannot open " << bfPath.native();
+      LOG(INFO) << "Cannot open " << bfPath.string();
       return FileStatusCode::EIOERROR;
   }
 

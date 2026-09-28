@@ -92,7 +92,7 @@ int main(int argc, char **argv)
   }
 
   google::InitGoogleLogging(argv[0]);
-  google::SetLogDestination(google::INFO, log_path.string().c_str());
+  google::SetLogDestination(google::GLOG_INFO, log_path.string().c_str());
 
   std::time_t startTime = std::time( 0 ) ;
 
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
   //Check if it is a file.
   if (! fs::is_regular_file( srcPath ) )
   {
-    LOG(ERROR) << srcPath.native() << " does not appear to be a file!";
+    LOG(ERROR) << srcPath.string() << " does not appear to be a file!";
     return EXIT_FAILURE;
   }
 
