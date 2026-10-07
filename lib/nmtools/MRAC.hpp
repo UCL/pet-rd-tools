@@ -47,7 +47,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "nmtools/Common.hpp"
-#include "json/json.hpp"
+#include "nlohmann/json.hpp"
 
 namespace nmtools {
 

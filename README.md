@@ -15,6 +15,7 @@ Tools for validating and extracting raw PET data, and associated files, for the 
 - ITK (>= 4.13.1)
 - Boost (>= 1.55)
 - GLOG ([https://github.com/google/glog](https://github.com/google/glog))
+- nlohmann_json (>= 3.2.0)
 
 ---
 ## Running the applications
