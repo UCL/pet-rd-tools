@@ -1,7 +1,7 @@
 # pet-rd-tools
 
-[![Build Status](https://travis-ci.org/UCL/pet-rd-tools.svg?branch=master)](https://travis-ci.org/UCL/pet-rd-tools)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d71cdf9cba3d4f9f9f973f371624bfe7)](https://www.codacy.com/app/bathomas/petmr-rd-tools?utm_source=github.com&utm_medium=referral&utm_content=UCL/petmr-rd-tools&utm_campaign=badger)
+[![Build and ctest and recon_test_pack CI](https://github.com/UCL/pet-rd-tools/actions/workflows/build-test.yml/badge.svg)](https://github.com/UCL/pet-rd-tools/actions/workflows/build-test.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/df584c5f0e64475d88bbbd1c22c13d4b)](https://app.codacy.com/gh/UCL/pet-rd-tools/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![DOI](https://zenodo.org/badge/113209519.svg)](https://zenodo.org/badge/latestdoi/113209519)
 
 Command line tools for PET raw data (including PET-MR) (pre)-processing.
