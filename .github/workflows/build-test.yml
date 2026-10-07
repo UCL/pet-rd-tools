@@ -37,16 +37,16 @@ jobs:
         # Note: conda=ON will force mamba install with all packages. For clarity, we set
         # compiler: conda-compiler, compiler_version: "", and all packages: "ON".
         # Although those variables are ignored, this gives a more accurate name to the job.
-        - os: ubuntu-24.04
+        - os: ubuntu-26.04
           compiler: conda-compiler
           BUILD_TYPE: "Release"
           conda: "ON"
-        - os: ubuntu-24.04
+        - os: ubuntu-26.04
           compiler: gcc
           # compiler_version: 9
           BUILD_TYPE: "Release"
           conda: "OFF"
-        - os: ubuntu-24.04
+        - os: ubuntu-26.04
           compiler: clang
           #compiler_version:
           BUILD_TYPE: "Release"
