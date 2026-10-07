@@ -27,6 +27,11 @@ endif()
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
+if (WIN32)
+   add_definitions(-DBOOST_ALL_NO_LIB)
+   add_definitions(-DBOOST_ALL_DYN_LINK)
+endif()
+
 find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
 #if (NOT ITKReview_LOADED)
