@@ -1,0 +1,13 @@
+name: pet-rd-tools
+channels:
+- conda-forge
+dependencies:
+  - cmake
+  # - ccache # recommended by not required (possibly interferes with existing ccache on GitHub Actions)
+  - ninja
+  - pre-commit>=4.0.1
+  - nlohmann_json>=3.2.0
+  - libboost-devel
+  - libitk-devel
+  - glog
+  
