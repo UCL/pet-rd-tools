@@ -1,0 +1,14 @@
+{
+    "plugins": {
+        "MD013": {
+            "enabled": true,
+            "line_length": 90,
+            "code_block_line_length": 120
+        },
+        // disable "no-bare URL"
+        "MD034": {
+            "enabled": false
+        }
+      }
+}
+
