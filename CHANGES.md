@@ -1,5 +1,10 @@
 # ChangeLog
 
+## v2.1.1
+
+* add pre-commit
+* add GitHub Actions checks
+
 ## v2.1.0
 
 * fix win build: `path::string()`, `google::GLOG_INFO`
@@ -16,6 +21,7 @@
 * fix reading of Siemens data
 
 ## v2.0.0
+
 * add capability to extract GE PET raw data. Just use `nm_extract`
 * `nm_extract` write to input path by default
 
