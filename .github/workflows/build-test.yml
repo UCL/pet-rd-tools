@@ -1,4 +1,4 @@
-name: Build and ctest and recon_test_pack CI
+name: Build and test CI
 
 on:
   push:
@@ -68,7 +68,7 @@ jobs:
           conda: "ON"
         - os: macOS-latest
           compiler: clang
-          # compiler_version: 21
+          compiler_version: 22
           BUILD_TYPE: "Release"
           conda: "OFF"
 
@@ -123,14 +123,12 @@ jobs:
                 HOMEBREW_PREFIX=/usr/local
               fi
               LLVMDIR=$HOMEBREW_PREFIX/opt/llvm@${{ matrix.compiler_version }}
-              export SDKROOT=$(xcrun --show-sdk-path)
-              echo SDKROOT="$SDKROOT"
-              # make available to jobs below
-              echo LDFLAGS="$LDFLAGS" >> $GITHUB_ENV
-              echo SDKROOT="$SDKROOT" >> $GITHUB_ENV
               CC="${LLVMDIR}/bin/clang"
               CXX="${LLVMDIR}/bin/clang++"
             fi
+            export SDKROOT=$(xcrun --show-sdk-path)
+            echo SDKROOT="$SDKROOT"
+            echo SDKROOT="$SDKROOT" >> $GITHUB_ENV
           fi
           export CC CXX
           # make available to jobs below
@@ -154,13 +152,13 @@ jobs:
               fi
 
               # other dependencies
-              sudo apt install -y cmake libboost-dev libinsighttoolkit5-dev libhdf5-serial-dev nlohmann-json3-dev ninja-build
+              sudo apt install -y cmake libboost-dev libinsighttoolkit5-dev libhdf5-serial-dev nlohmann-json3-dev libgoogle-glog-dev ninja-build
               ;;
             (macOS*)
               if ! command -v ninja > /dev/null; then
                   brew install ninja
               fi
-              brew install boost nlohmann-json itk
+              brew install boost nlohmann-json itk glog
               ;;
             (windows*)
               # this compiles the whole thing so takes ages
@@ -198,12 +196,6 @@ jobs:
             source "${GITHUB_WORKSPACE}/my-env/bin/activate"
           fi
           cmake --build . --config ${BUILD_TYPE} --target install
-
-    - name: test
-      env:
-          BUILD_TYPE: ${{ matrix.BUILD_TYPE }}
-      run: |
-          set -vx
 
     - name: test
       run: |
