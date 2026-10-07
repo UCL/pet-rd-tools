@@ -1,0 +1,212 @@
+name: Build and ctest and recon_test_pack CI
+
+on:
+  push:
+    branches: 
+      - master
+    paths-ignore:
+      - '.appveyor.yml'
+      - 'CITATION.cff'
+      - '**/*.md'
+      - '**/*.html'
+      - '**/*.htm'
+      - '**/*.tex'
+
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - '.appveyor.yml'
+      - 'CITATION.cff'
+      - '**/*.md'
+      - '**/*.html'
+      - '**/*.htm'
+      - '**/*.tex'
+
+jobs:
+  build:
+    defaults:
+      run:
+        # All steps that don't have an explicit `shell` will activate any conda environment, see https://github.com/mamba-org/setup-micromamba#about-login-shells
+        shell: 'bash -leo pipefail {0}'
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+        # Note: conda=ON will force mamba install with all packages. For clarity, we set
+        # compiler: conda-compiler, compiler_version: "", and all packages: "ON".
+        # Although those variables are ignored, this gives a more accurate name to the job.
+        - os: ubuntu-24.04
+          compiler: conda-compiler
+          BUILD_TYPE: "Release"
+          conda: "ON"
+        - os: ubuntu-24.04
+          compiler: gcc
+          # compiler_version: 9
+          BUILD_TYPE: "Release"
+          conda: "OFF"
+        - os: ubuntu-24.04
+          compiler: clang
+          #compiler_version:
+          BUILD_TYPE: "Release"
+          conda: "OFF"
+        - os: ubuntu-26.04
+          compiler: gcc
+          compiler_version: 15
+          BUILD_FLAGS: "-DCMAKE_CXX_STANDARD=17"
+          BUILD_TYPE: "Debug"
+          conda: "OFF"
+        - os: macOS-latest
+          compiler: gcc
+          BUILD_TYPE: "Release"
+          conda: "OFF"
+        - os: macOS-latest
+          compiler: conda-compiler
+          compiler_version: ""
+          BUILD_TYPE: "Release"
+          conda: "ON"
+        - os: macOS-latest
+          compiler: clang
+          # compiler_version: 21
+          BUILD_TYPE: "Release"
+          conda: "OFF"
+
+      # let's run all of them, as opposed to aborting when one fails
+      fail-fast: false
+
+    name: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.compiler_version }}-${{ matrix.BUILD_TYPE }}
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: recursive
+
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.compiler_version }}-${{ matrix.BUILD_TYPE }}
+        max-size: "2G"
+
+    - name: Setup conda environment
+      if: matrix.conda == 'ON'
+      uses: mamba-org/setup-micromamba@v3
+      with:
+        environment-file: build_environment.yml
+        environment-name: pet-rd-tools
+        cache-environment: true
+        cache-downloads: true
+
+    - name: General env variables
+      run: |
+          # We will install all software, including some external dependencies, here
+          echo CMAKE_INSTALL_PREFIX="${GITHUB_WORKSPACE}/install" >> $GITHUB_ENV
+    - name: set_compiler_variables (no conda)
+      if: matrix.conda !='ON'
+      run: |
+          set -ex
+          if test 'XX${{ matrix.compiler }}' = 'XXclang'; then
+            CC="clang"
+            CXX="clang++"
+          elif test 'XX${{ matrix.compiler }}' = 'XXgcc'; then
+            CC="gcc"
+            CXX="g++"
+          fi
+          if test 'XX${{ matrix.compiler_version }}' != 'XX'; then
+            CC=${CC}-${{ matrix.compiler_version }}
+            CXX=${CXX}-${{ matrix.compiler_version }}            
+          fi
+          if [[ '${{ matrix.os }}' == macOS* ]]; then
+            if test 'XX${{ matrix.compiler }}' = 'XXclang'; then
+              brew install llvm@${{ matrix.compiler_version }}
+              if test XX${HOMEBREW_PREFIX} = XX; then
+                HOMEBREW_PREFIX=/usr/local
+              fi
+              LLVMDIR=$HOMEBREW_PREFIX/opt/llvm@${{ matrix.compiler_version }}
+              export SDKROOT=$(xcrun --show-sdk-path)
+              echo SDKROOT="$SDKROOT"
+              # make available to jobs below
+              echo LDFLAGS="$LDFLAGS" >> $GITHUB_ENV
+              echo SDKROOT="$SDKROOT" >> $GITHUB_ENV
+              CC="${LLVMDIR}/bin/clang"
+              CXX="${LLVMDIR}/bin/clang++"
+            fi
+          fi
+          export CC CXX
+          # make available to jobs below
+          echo CC="$CC" >> $GITHUB_ENV
+          echo CXX="$CXX" >> $GITHUB_ENV
+
+    - name: install_dependencies (no conda)
+      if: matrix.conda !='ON'
+      run: |
+          set -ex
+
+          case ${{matrix.os}} in
+            (ubuntu*)
+              sudo apt update
+              # install compiler
+              if test 'XX${{ matrix.compiler }}' = 'XXclang'; then
+                  # package is called clang, need libomp-dev for OpenMP support
+                  sudo apt install -y $CC libomp-dev
+              else
+                  sudo apt install -y $CXX
+              fi
+
+              # other dependencies
+              sudo apt install -y cmake libboost-dev libinsighttoolkit5-dev libhdf5-serial-dev nlohmann-json3-dev ninja-build
+              ;;
+            (macOS*)
+              if ! command -v ninja > /dev/null; then
+                  brew install ninja
+              fi
+              brew install boost nlohmann-json itk
+              ;;
+            (windows*)
+              # this compiles the whole thing so takes ages
+              vcpkg install boost-core nlohmann-json itk
+              vcpkg list
+              ;;
+          esac
+
+
+    - name: configure
+      env:
+          BUILD_TYPE: ${{ matrix.BUILD_TYPE }}
+          BUILD_FLAGS: ${{ matrix.BUILD_FLAGS }}
+      run: |
+          set -ex
+          if test -f "${GITHUB_WORKSPACE}/my-env/bin/activate"; then
+            source ${GITHUB_WORKSPACE}/my-env/bin/activate
+          fi
+          #export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+          cmake --version
+          if test "XX$CC" != "XX"; then
+              $CC --version
+              $CXX --version
+          fi
+          mkdir build
+          cd build
+          cmake -G Ninja -S .. -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCMAKE_CXX_FLAGS=${BUILD_FLAGS}
+
+    - name: build
+      env:
+          BUILD_TYPE: ${{ matrix.BUILD_TYPE }}
+      run: |
+          cd ${GITHUB_WORKSPACE}/build;
+          if test -f "${GITHUB_WORKSPACE}/my-env/bin/activate"; then
+            source "${GITHUB_WORKSPACE}/my-env/bin/activate"
+          fi
+          cmake --build . --config ${BUILD_TYPE} --target install
+
+    - name: test
+      env:
+          BUILD_TYPE: ${{ matrix.BUILD_TYPE }}
+      run: |
+          set -vx
+
+    - name: test
+      run: |
+          set -e
+          PATH=${CMAKE_INSTALL_PREFIX}/bin:$PATH
+          nm_validate --help
