@@ -48,7 +48,7 @@
 
 #include "Common.hpp"
 #include "MRAC.hpp"
-#include "json/json.hpp"
+#include "nlohmann/json.hpp"
 
 namespace nmtools {
 

@@ -34,3 +34,6 @@ include(${ITK_USE_FILE})
 #endif()
 
 find_package(glog REQUIRED)
+
+find_package(nlohmann_json 3.2.0 CONFIG)
+
