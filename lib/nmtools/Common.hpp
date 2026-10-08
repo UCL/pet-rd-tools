@@ -204,7 +204,7 @@ bool IRawDataFactory::Open(boost::filesystem::path inFile) {
   return true;
 }
 
-itk::SpatialOrientation::CoordinateTerms GetOrientationCode(char &c){
+itk::SpatialOrientationEnums::CoordinateTerms GetOrientationCode(char &c){
 
   c = toupper(c);
 
@@ -212,33 +212,33 @@ itk::SpatialOrientation::CoordinateTerms GetOrientationCode(char &c){
 
   if (validVals.find(c) == std::string::npos){
     LOG(ERROR) << c << " is not a valid orientation code value!";
-    return itk::SpatialOrientation::ITK_COORDINATE_UNKNOWN;
+    return itk::SpatialOrientationEnums::CoordinateTerms::ITK_COORDINATE_UNKNOWN;
   }
 
   if (c == 'R')
-    return itk::SpatialOrientation::ITK_COORDINATE_Right;
+    return itk::SpatialOrientationEnums::CoordinateTerms::ITK_COORDINATE_Right;
 
   if (c == 'L')
-    return itk::SpatialOrientation::ITK_COORDINATE_Left;
+    return itk::SpatialOrientationEnums::CoordinateTerms::ITK_COORDINATE_Left;
 
   if (c == 'P')
-    return itk::SpatialOrientation::ITK_COORDINATE_Posterior;
+    return itk::SpatialOrientationEnums::CoordinateTerms::ITK_COORDINATE_Posterior;
 
   if (c == 'A')
-    return itk::SpatialOrientation::ITK_COORDINATE_Anterior;
+    return itk::SpatialOrientationEnums::CoordinateTerms::ITK_COORDINATE_Anterior;
 
   if (c == 'I')
-    return itk::SpatialOrientation::ITK_COORDINATE_Inferior;
+    return itk::SpatialOrientationEnums::CoordinateTerms::ITK_COORDINATE_Inferior;
 
   if (c == 'S')
-    return itk::SpatialOrientation::ITK_COORDINATE_Superior;
+    return itk::SpatialOrientationEnums::CoordinateTerms::ITK_COORDINATE_Superior;
 
-  return itk::SpatialOrientation::ITK_COORDINATE_UNKNOWN;
+  return itk::SpatialOrientationEnums::CoordinateTerms::ITK_COORDINATE_UNKNOWN;
 
 }
 
 bool SetDesiredCoordinateOrientation(const std::string &target,
-                                     itk::SpatialOrientation::ValidCoordinateOrientationFlags &finalOrientation){
+                                     itk::SpatialOrientationEnums::ValidCoordinateOrientations &finalOrientation){
 
   std::vector<int> coordVals(3);
 
@@ -259,11 +259,11 @@ bool SetDesiredCoordinateOrientation(const std::string &target,
   }
 
   //See itkSpatialOrientation.h
-  itk::SpatialOrientation::ValidCoordinateOrientationFlags o =
-      (itk::SpatialOrientation::ValidCoordinateOrientationFlags)(
-          ( coordVals[0] << static_cast<int>(itk::SpatialOrientation::ITK_COORDINATE_PrimaryMinor )) +
-          ( coordVals[1] << static_cast<int>(itk::SpatialOrientation::ITK_COORDINATE_SecondaryMinor )) +
-          ( coordVals[2] << static_cast<int>(itk::SpatialOrientation::ITK_COORDINATE_TertiaryMinor )));
+  itk::SpatialOrientationEnums::ValidCoordinateOrientations o =
+      (itk::SpatialOrientationEnums::ValidCoordinateOrientations)(
+          ( coordVals[0] << static_cast<int>(itk::SpatialOrientationEnums::CoordinateMajornessTerms::ITK_COORDINATE_PrimaryMinor )) +
+          ( coordVals[1] << static_cast<int>(itk::SpatialOrientationEnums::CoordinateMajornessTerms::ITK_COORDINATE_SecondaryMinor )) +
+          ( coordVals[2] << static_cast<int>(itk::SpatialOrientationEnums::CoordinateMajornessTerms::ITK_COORDINATE_TertiaryMinor )));
 
   //Check we don't have an duplicates.
   std::sort(coordVals.begin(), coordVals.end());

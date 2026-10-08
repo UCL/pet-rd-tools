@@ -126,8 +126,8 @@ protected:
   nlohmann::json _params;
 
   //Default image orientation is RAI
-  itk::SpatialOrientation::ValidCoordinateOrientationFlags _outputOrientation 
-    = itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI;
+  itk::SpatialOrientationEnums::ValidCoordinateOrientations _outputOrientation 
+    = itk::SpatialOrientationEnums::ValidCoordinateOrientations::ITK_COORDINATE_ORIENTATION_RAI;
 
   //Reslice and crop into 344x344 matrix for brain. Off by default.
   bool _isHead = false;
