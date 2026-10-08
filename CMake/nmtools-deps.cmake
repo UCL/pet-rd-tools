@@ -1,38 +1,11 @@
-# cmake>=4.1: no FindBoost (CMP0167)
-# boost>=1.70: own config (preferred)
-find_package(Boost 1.54.0 CONFIG QUIET
-  COMPONENTS
-    chrono
-    date_time
-    filesystem
-    program_options
-    regex
-    system
-    thread
-)
-if (NOT Boost_FOUND)
-  find_package(Boost 1.54.0 MODULE
-    COMPONENTS
-      chrono
-      date_time
-      filesystem
-      program_options
-      regex
-      system
-      thread
-    REQUIRED
-  )
-endif()
+# CMake >= 4 removed FindBoost, so rely on Boost's own per-library CMake configs
+# (Boost >= 1.82, or distro packages that install them). Linking the imported
+# Boost::<lib> targets also picks up the per-library *_DYN_LINK definitions
+# Boost needs on Windows.
+find_package(Boost 1.82 REQUIRED COMPONENTS filesystem program_options regex)
 
-include_directories(${Boost_INCLUDE_DIRS})
-link_directories(${Boost_LIBRARY_DIRS})
-
-if (WIN32)
-   add_definitions(-DBOOST_ALL_NO_LIB)
-   add_definitions(-DBOOST_ALL_DYN_LINK)
-endif()
-
-find_package(ITK REQUIRED)
+# Requires the itk::SpatialOrientationEnums API (ITK >= 5.3).
+find_package(ITK 5.3 REQUIRED)
 include(${ITK_USE_FILE})
 #if (NOT ITKReview_LOADED)
 #	message(FATAL_ERROR "ITK should be built with the Module_ITKReview enabled.")
@@ -40,5 +13,5 @@ include(${ITK_USE_FILE})
 
 find_package(glog REQUIRED)
 
-find_package(nlohmann_json 3.2.0 CONFIG)
+find_package(nlohmann_json 3.2.0 CONFIG REQUIRED)
 

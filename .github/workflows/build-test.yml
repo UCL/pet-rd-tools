@@ -54,7 +54,6 @@ jobs:
         - os: ubuntu-26.04
           compiler: gcc
           compiler_version: 15
-          BUILD_FLAGS: "-DCMAKE_CXX_STANDARD=17"
           BUILD_TYPE: "Debug"
           conda: "OFF"
         - os: macOS-latest
@@ -171,7 +170,6 @@ jobs:
     - name: configure
       env:
           BUILD_TYPE: ${{ matrix.BUILD_TYPE }}
-          BUILD_FLAGS: ${{ matrix.BUILD_FLAGS }}
       run: |
           set -ex
           if test -f "${GITHUB_WORKSPACE}/my-env/bin/activate"; then
@@ -185,7 +183,11 @@ jobs:
           fi
           mkdir build
           cd build
-          cmake -G Ninja -S .. -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCMAKE_CXX_FLAGS=${BUILD_FLAGS}
+          cmake -G Ninja -S .. \
+            -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+            -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
+            -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON
 
     - name: build
       env:
@@ -201,4 +203,6 @@ jobs:
       run: |
           set -e
           PATH=${CMAKE_INSTALL_PREFIX}/bin:$PATH
-          nm_validate --help
+          for tool in nm_validate nm_extract nm_mrac2mu nm_signa2mu; do
+              $tool --help > /dev/null
+          done
