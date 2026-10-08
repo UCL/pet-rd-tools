@@ -241,9 +241,14 @@ bool MRAC2MU::Read(){
   nameGenerator->SetLoadSequences(true);
   nameGenerator->SetLoadPrivateTags(true);
 
+  //GDCM 1.x-only no-ops; absent from ITK built with ITK_LEGACY_REMOVE.
+#if !defined(ITK_LEGACY_REMOVE)
   _pDicomInfo->SetMaxSizeLoadEntry(0xffffffffffffffff);
+#endif
   _pDicomInfo->SetLoadPrivateTags(true);
+#if !defined(ITK_LEGACY_REMOVE)
   _pDicomInfo->SetLoadSequences(true);
+#endif
   //_pDicomInfo->SetLoadPrivateTagsDefault(true);
 
   //Create ITK ImageSeriesReader
