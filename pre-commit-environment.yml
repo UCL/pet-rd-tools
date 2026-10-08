@@ -1,0 +1,5 @@
+name: pre-commit-env
+channels:
+  - conda-forge
+dependencies:
+  - pre-commit

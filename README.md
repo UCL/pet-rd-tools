@@ -1,13 +1,17 @@
 # pet-rd-tools
 
-[![Build Status](https://travis-ci.org/UCL/pet-rd-tools.svg?branch=master)](https://travis-ci.org/UCL/pet-rd-tools)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d71cdf9cba3d4f9f9f973f371624bfe7)](https://www.codacy.com/app/bathomas/petmr-rd-tools?utm_source=github.com&utm_medium=referral&utm_content=UCL/petmr-rd-tools&utm_campaign=badger) [![DOI](https://zenodo.org/badge/113209519.svg)](https://zenodo.org/badge/latestdoi/113209519)
+[![Build and ctest and recon_test_pack CI](https://github.com/UCL/pet-rd-tools/actions/workflows/build-test.yml/badge.svg)](https://github.com/UCL/pet-rd-tools/actions/workflows/build-test.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/df584c5f0e64475d88bbbd1c22c13d4b)](https://app.codacy.com/gh/UCL/pet-rd-tools/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![DOI](https://zenodo.org/badge/113209519.svg)](https://zenodo.org/badge/latestdoi/113209519)
 
+Command line tools for PET raw data (including PET-MR) (pre)-processing.
 
-
-Command line tools for PET-MR (pre)-processing.
-
-Tools for validating and extracting raw PET data, and associated files, for the purposes of image reconstruction via [STIR](https://github.com/UCL/STIR) and [SIRF](https://github.com/CCPPETMR/SIRF). Currently these tools are mainly for the [Siemens mMR system](https://www.healthcare.siemens.com/magnetic-resonance-imaging/mr-pet-scanner/biograph-mmr) and [GE Signa PET/MR](http://www3.gehealthcare.com/en/products/categories/magnetic_resonance_imaging/3-0t/signa_pet-mr), although other GE PET/CT scanners should work as well.
+Tools for validating and extracting raw PET data, and associated files, for the
+purpose of image reconstruction via [STIR](https://github.com/UCL/STIR) and
+[SIRF](https://github.com/CCPPETMR/SIRF). Currently these tools are mainly for the
+[Siemens mMR system](https://www.healthcare.siemens.com/magnetic-resonance-imaging/mr-pet-scanner/biograph-mmr)
+and [GE Signa PET/MR](http://www3.gehealthcare.com/en/products/categories/magnetic_resonance_imaging/3-0t/signa_pet-mr),
+although other GE PET/CT scanners should work as well.
 
 ## Requirements for building
 
@@ -18,22 +22,26 @@ Tools for validating and extracting raw PET data, and associated files, for the 
 - nlohmann_json (>= 3.2.0)
 
 ---
+
 ## Running the applications
+
 ### `nm_validate`
 
-The purpose of `nm_validate` is to confirm if a raw data file (or file pair) contains all the expected data.
+The purpose of `nm_validate` is to confirm if a raw data file (or file pair)
+contains all the expected data.
 
-*WARNING*: This currently only performs additional checks on Siemens mMR data. For GE data, there are no
-checks on the content of the RDF.
+*WARNING*: This currently only performs additional checks on Siemens mMR data.
+For GE data, there are no checks on the content of the RDF.
 
-#### Usage:
+#### `nm_validate` usage
 
 ```bash
 nm_validate -i <DICOM file>
 ```
 
 Example output for a valid list mode file:
-```
+
+```console
 I1205 17:15:37.418709 3333379008 NMValidate.cpp:99] Started: Tue Dec  5 17:15:37 2017
 I1205 17:15:37.419257 3333379008 NMValidate.cpp:100] Running 'nm_validate' version: 0.1.0
 I1205 17:15:39.136943 3333379008 Common.hpp:89] Manufacturer: SIEMENS 
@@ -47,67 +55,100 @@ I1205 17:15:41.942119 3333379008 NMValidate.cpp:139] Time taken: 4 seconds
 I1205 17:15:41.942123 3333379008 NMValidate.cpp:140] Ended: Tue Dec  5 17:15:41 2017
 ```
 
-`nm_validate` will check list mode, sinogram and normalisation (norm) files. The size of the anticipated raw data is checked, but not the actual contents. Due to compression of the sinogram data, only the existence of files are tested.
+`nm_validate` will check list mode, sinogram and normalisation (norm) files.
+The size of the anticipated raw data is checked, but not the actual contents.
+Due to compression of the sinogram data, only the existence of files are tested.
 
 ### `nm_extract`
 
-Raw PET data from the mMR scanner can be in one of two forms: a single DICOM file or a pair of files (one DICOM header and a raw binary file). `nm_extract` reads the DICOM data and extracts the Interfile header and the raw data for either of the two forms. Once extracted, the Interfile header can be used for image reconstruction with STIR.
+Raw PET data from the mMR scanner can be in one of two forms:
+a single DICOM file or a pair of files (one DICOM header and a raw binary file).
+`nm_extract` reads the DICOM data and extracts the Interfile header and the raw
+data for either of the two forms. Once extracted, the Interfile header can be
+used for image reconstruction with STIR.
 
-GE PET scanners also store the raw data in a single DICOM file. `nm_extract` reads this file and extracts the GE RDF (Raw Data Format)
+GE PET scanners also store the raw data in a single DICOM file.
+`nm_extract` reads this file and extracts the GE RDF (Raw Data Format)
 file. This can then be used in STIR.
 
-#### Usage:
+#### `nm_extract` usage
 
 ```bash
 nm_extract -i <DICOM file> [-o <OUTPUTDIR> -p <PREFIX> --noupdate ]
 ```
-where `<DICOM file>` is the input file for extraction, `<OUTPUTDIR>` is the target output directory and `<PREFIX>` is the desired filename prefix for the output files. If the `<OUTPUTDIR>` does not exist, `nm_validate` will attempt to create it. If `<OUTPUTDIR>` is not specified, the output will be written to the same directory as the input.
 
-For Siemens data, `--noupdate` will extract the raw Interfile without modification (mainly for debugging). For GE data, this option is ignored.
+where `<DICOM file>` is the input file for extraction,
+`<OUTPUTDIR>` is the target output directory and
+`<PREFIX>` is the desired filename prefix for the output files.
+If the `<OUTPUTDIR>` does not exist, `nm_validate` will attempt to
+create it.
+If `<OUTPUTDIR>` is not specified, the output will be written to the same directory
+as the input.
 
+For Siemens data, `--noupdate` will extract the raw Interfile without modification
+(mainly for debugging). For GE data, this option is ignored.
 
 #### Output extensions
 
 Siemens data:
-- List mode files will be extracted with `.l` extensions for the list mode data and `.l.hdr` for the associated Interfile header.
-- Sinograms files will have the extension `.s` for the sinogram data and `.s.hdr` for the associated Interfile header.
+
+- List mode files will be extracted with `.l` extensions for the list mode data
+  and `.l.hdr` for the associated Interfile header.
+- Sinograms files will have the extension `.s` for the sinogram data and
+`.s.hdr` for the associated Interfile header.
 - Normalisation files will be extracted with `.n` and `.n.hdr` extensions.
 
 GE data:
+
 - List mode files will be extracted with `.BLF` extension.
 - Sinogram files will have `.sino.rdf` extension.
 - Norm and geometric norm files will have `.norm.rdf` and `.geo.rdf` extensions.
 
 ### `nm_mrac2mu`
 
-`nm_mrac2mu` extracts the patient mu-map from mMR MRAC DICOM data, scales to linear attenuation coefficients (LACs) and reslices into a full-size matrix (344 x 344 x 127) for PET reconstruction. The mu-map is oriented in LPS. 
+`nm_mrac2mu` extracts the patient mu-map from mMR MRAC DICOM data, scales to
+linear attenuation coefficients (LACs) and reslices into a full-size matrix
+(344 x 344 x 127) for PET reconstruction. The mu-map is oriented in LPS.
 
-#### Usage: 
+#### `nm_mrac2mu` usage
 
 ```bash
 nm_mrac2mu -i <DICOMDIR> -o <OUTPUT file> [--orient <ORIENTATION> --head]
 ```
 
-where `<DICOMDIR>` is the path to the MRAC DICOM folder and `<OUTPUT file>` is the destination file. `<ORIENTATION>` is the desired coordinate orientation (default 'RAI'). The switch `--head` will generate a mu-map in 344x344x127 matrix and is currently hard-coded for the mMR brain MRAC.
+where `<DICOMDIR>` is the path to the MRAC DICOM folder and
+`<OUTPUT file>` is the destination file.
+`<ORIENTATION>` is the desired coordinate orientation (default 'RAI').
+The switch `--head` will generate a mu-map in 344x344x127 matrix and
+is currently hard-coded for the mMR brain MRAC.
 
-#### Output extensions
+#### `nm_mrac2mu` output extensions
 
-- The output file type is determined by the extension of the destination file. To produce a compressed NiFTi file, specify the extension `.nii.gz` e.g. `myoutput.nii.gz`. 
-- If the extension `.hv` is given, an Interfile header is generated in addition to the volume.
+- The output file type is determined by the extension of the destination file.
+  To produce a compressed NiFTi file, specify the extension `.nii.gz`,
+  e.g. `myoutput.nii.gz`.
+- If the extension `.hv` is given, an Interfile header is generated in
+  addition to the volume.
 
 ### `nm_signa2mu`
 
-`nm_signa2mu` extracts the patient mu-map from the GE Signa mMR DICOM data, scales to linear attenuation coefficients (LACs) and writes to an output file.
+`nm_signa2mu` extracts the patient mu-map from the GE Signa mMR DICOM data,
+scales to linear attenuation coefficients (LACs) and writes to an output file.
 
-#### Usage: 
+#### `nm_signa2mu` usage
 
 ```bash
 nm_signa2mu -i <DICOMDIR> -o <OUTPUT file> [--orient <ORIENTATION>]
 ```
 
-where `<DICOMDIR>` is the path to the MRAC DICOM folder and `<OUTPUT file>` is the destination file. `<ORIENTATION>` is the desired coordinate orientation (default 'RAI'). 
+where `<DICOMDIR>` is the path to the MRAC DICOM folder and
+`<OUTPUT file>` is the destination file.
+`<ORIENTATION>` is the desired coordinate orientation (default 'RAI').
 
-#### Output extensions
+#### `nm_signa2mu` output extensions
 
-- The output file type is determined by the extension of the destination file. To produce a compressed NiFTi file, specify the extension `.nii.gz` e.g. `myoutput.nii.gz`. 
-- If the extension `.hv` is given, an Interfile header is generated in addition to the volume.
+- The output file type is determined by the extension of the destination file.
+  To produce a compressed NiFTi file, specify the extension `.nii.gz`,
+  e.g. `myoutput.nii.gz`.
+- If the extension `.hv` is given, an Interfile header is generated in addition
+  to the volume.

@@ -1,5 +1,12 @@
 # ChangeLog
 
+## v2.2.0
+
+* add pre-commit
+* add GitHub Actions checks
+* cope with recent ITK (with `ITK_LEGACY_REMOVE`)
+* raise minimum ITK version to 5.3
+
 ## v2.1.0
 
 * fix win build: `path::string()`, `google::GLOG_INFO`
@@ -16,6 +23,7 @@
 * fix reading of Siemens data
 
 ## v2.0.0
+
 * add capability to extract GE PET raw data. Just use `nm_extract`
 * `nm_extract` write to input path by default
 
